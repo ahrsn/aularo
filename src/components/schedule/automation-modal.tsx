@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { createAutomation, updateAutomation } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useMountTransition } from "@/components/ui/motion";
 import type { Automation, AutomationTrigger } from "@/lib/schema";
 import { AUTOMATION_ICONS } from "./automation-icons";
 
@@ -32,6 +34,7 @@ export function AutomationModal({
   automation?: Automation;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [trigger, setTrigger] = useState<AutomationTrigger>(
     automation?.trigger ?? "doors_open",
   );
@@ -57,7 +60,8 @@ export function AutomationModal({
     setErr(null);
   }, [open, automation]);
 
-  if (!open) return null;
+  const { mounted, state } = useMountTransition(open, 320);
+  if (!mounted) return null;
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -76,6 +80,7 @@ export function AutomationModal({
             action: action.trim(),
             icon,
           });
+          toast.success("Automation created");
         } else if (automation) {
           await updateAutomation({
             id: automation.id,
@@ -85,6 +90,7 @@ export function AutomationModal({
             action: action.trim(),
             icon,
           });
+          toast.success("Automation saved");
         }
         router.refresh();
         onClose();
@@ -96,9 +102,7 @@ export function AutomationModal({
             upgrade: true,
           });
         } else {
-          setErr({
-            message: e instanceof Error ? e.message : "Failed to save",
-          });
+          toast.error(e, "Couldn't save automation.");
         }
       }
     });
@@ -106,13 +110,14 @@ export function AutomationModal({
 
   return (
     <div
+      data-motion="overlay"
+      data-state={state}
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{
-        background: "rgba(14,20,16,0.42)",
-        backdropFilter: "blur(6px)",
-      }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
     >
       <div
+        data-motion="panel"
+        data-state={state}
         className="w-full max-w-[520px] overflow-hidden rounded-[6px] border border-line bg-surface"
         style={{ boxShadow: "0 24px 56px -16px rgba(14,20,16,0.4)" }}
       >
@@ -213,7 +218,7 @@ export function AutomationModal({
           </div>
 
           {err && (
-            <div className="flex items-center justify-between gap-3 rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
+            <div data-motion="error" className="flex items-center justify-between gap-3 rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
               <span>{err.message}</span>
               {err.upgrade && (
                 <Link

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { createScheduleBlock } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useMountTransition } from "@/components/ui/motion";
 import type { Display, Slideshow } from "@/lib/schema";
 
 export function AddBlockModal({
@@ -22,6 +24,7 @@ export function AddBlockModal({
   defaultDayKey: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [name, setName] = useState("");
   const [displayId, setDisplayId] = useState<string>(displays[0]?.id ?? "");
   const [slideshowId, setSlideshowId] = useState<string>("");
@@ -43,7 +46,8 @@ export function AddBlockModal({
     if (displays[0] && !displayId) setDisplayId(displays[0].id);
   }, [displays, displayId]);
 
-  if (!open) return null;
+  const { mounted, state } = useMountTransition(open, 320);
+  if (!mounted) return null;
 
   function toDecimal(v: string): number {
     const [h, m] = v.split(":").map(Number);
@@ -74,22 +78,24 @@ export function AddBlockModal({
           end: en,
         });
         router.refresh();
+        toast.success("Block added");
         onClose();
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Failed to save");
+        toast.error(e, "Couldn't save block.");
       }
     });
   }
 
   return (
     <div
+      data-motion="overlay"
+      data-state={state}
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{
-        background: "rgba(14,20,16,0.42)",
-        backdropFilter: "blur(6px)",
-      }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
     >
       <div
+        data-motion="panel"
+        data-state={state}
         className="w-full max-w-[520px] overflow-hidden rounded-[6px] border border-line bg-surface"
         style={{ boxShadow: "0 24px 56px -16px rgba(14,20,16,0.4)" }}
       >
@@ -176,7 +182,7 @@ export function AddBlockModal({
           </div>
 
           {err && (
-            <div className="rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
+            <div data-motion="error" className="rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
               {err}
             </div>
           )}

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { createEvent } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
+import { useMountTransition } from "@/components/ui/motion";
 
 export function EventCreateModal({
   open,
@@ -15,13 +17,15 @@ export function EventCreateModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
 
-  if (!open) return null;
+  const { mounted, state } = useMountTransition(open, 320);
+  if (!mounted) return null;
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,8 +49,9 @@ export function EventCreateModal({
         setStartDate("");
         setEndDate("");
         onClose();
+        toast.success("Event created");
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Couldn't create");
+        toast.error(e, "Couldn't create event.");
       }
     });
   }
@@ -54,12 +59,16 @@ export function EventCreateModal({
   return (
     <div
       onClick={onClose}
+      data-motion="overlay"
+      data-state={state}
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{ background: "rgba(14,20,16,0.42)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
     >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={onSubmit}
+        data-motion="panel"
+        data-state={state}
         className="w-full max-w-[460px] overflow-hidden rounded-[6px] border border-line bg-surface"
         style={{ boxShadow: "0 24px 56px -16px rgba(14,20,16,0.4)" }}
       >
@@ -113,7 +122,7 @@ export function EventCreateModal({
             </label>
           </div>
           {err && (
-            <div className="rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
+            <div data-motion="error" className="rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
               {err}
             </div>
           )}

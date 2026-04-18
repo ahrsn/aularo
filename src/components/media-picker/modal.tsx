@@ -12,6 +12,7 @@ import { firestore } from "@/lib/firebase-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
+import { useMountTransition } from "@/components/ui/motion";
 import type { MediaAsset } from "@/lib/schema";
 
 /* eslint-disable @next/next/no-img-element */
@@ -61,15 +62,20 @@ export function MediaPickerModal({
     });
   }, [assets, search, filter, acceptMime]);
 
-  if (!open) return null;
+  const { mounted, state } = useMountTransition(open, 320);
+  if (!mounted) return null;
 
   return (
     <div
+      data-motion="overlay"
+      data-state={state}
       onClick={onClose}
       className="fixed inset-0 z-[1100] flex items-center justify-center p-6"
-      style={{ background: "rgba(14,20,16,0.42)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
     >
       <div
+        data-motion="panel"
+        data-state={state}
         onClick={(e) => e.stopPropagation()}
         className="flex w-full flex-col overflow-hidden rounded-[6px] border border-line bg-surface"
         style={{
