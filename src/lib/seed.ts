@@ -365,6 +365,7 @@ export async function seedChaosOffice(
       pairedAt: now - 30 * DAY,
       lastHeartbeat: now - 3 * 1000,
       browserInfo: "Samsung QM · Chrome 120",
+      shortCode: null,
       seed: true,
     },
     {
@@ -378,6 +379,7 @@ export async function seedChaosOffice(
       pairedAt: now - 22 * DAY,
       lastHeartbeat: now - 2 * 1000,
       browserInfo: "LG UR · Chrome 120",
+      shortCode: null,
       seed: true,
     },
     {
@@ -391,6 +393,7 @@ export async function seedChaosOffice(
       pairedAt: now - 60 * DAY,
       lastHeartbeat: now - 5 * 1000,
       browserInfo: "Sony Bravia · Chrome 120",
+      shortCode: null,
       seed: true,
     },
     {
@@ -404,6 +407,7 @@ export async function seedChaosOffice(
       pairedAt: now - 15 * DAY,
       lastHeartbeat: now - 4 * 1000,
       browserInfo: "Mac mini · Chrome 120",
+      shortCode: null,
       seed: true,
     },
     {
@@ -417,6 +421,7 @@ export async function seedChaosOffice(
       pairedAt: now - 45 * DAY,
       lastHeartbeat: now - 1 * 1000,
       browserInfo: "iPad · Safari 17",
+      shortCode: null,
       seed: true,
     },
     {
@@ -430,6 +435,7 @@ export async function seedChaosOffice(
       pairedAt: now - 90 * DAY,
       lastHeartbeat: now - 34 * 60 * 1000,
       browserInfo: "Kiosk PC · Chrome 118",
+      shortCode: null,
       seed: true,
     },
   ];

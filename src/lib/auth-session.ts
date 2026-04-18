@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { adminAuth } from "./firebase-admin";
 
@@ -24,7 +25,7 @@ export async function clearSessionCookie() {
   jar.delete(SESSION_COOKIE);
 }
 
-export async function getSessionUser() {
+export const getSessionUser = cache(async () => {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
@@ -34,12 +35,12 @@ export async function getSessionUser() {
   } catch {
     return null;
   }
-}
+});
 
-export async function requireUser() {
+export const requireUser = cache(async () => {
   const user = await getSessionUser();
   if (!user) {
     throw new Error("UNAUTHENTICATED");
   }
   return user;
-}
+});
