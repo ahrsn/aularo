@@ -30,12 +30,15 @@
   --header-h: 52px;
   --content-max: 1120px;
 
-  /* Motion */
+  /* Motion — brand guideline v1.0 §07 */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-quiet: cubic-bezier(0.4, 0, 0.2, 1);   /* 180ms — hovers, focus */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1); /* 320ms — panels, menus */
   --ease-turn: cubic-bezier(0.77, 0, 0.175, 1); /* 600ms — page transitions */
+  --duration-quiet: 180ms;
+  --duration-settle: 320ms;
+  --duration-turn: 600ms;
 }
 
 /* Tailwind v4 theme bridge — expose tokens as utilities */
@@ -64,6 +67,24 @@
     Georgia, serif;
   --font-mono: var(--font-jetbrains), "JetBrains Mono", ui-monospace,
     SFMono-Regular, Menlo, monospace;
+
+  --ease-quiet: var(--ease-quiet);
+  --ease-settle: var(--ease-settle);
+  --ease-turn: var(--ease-turn);
+}
+
+/* Duration utilities — brand motion tokens as first-class Tailwind utilities */
+@utility duration-quiet {
+  transition-duration: var(--duration-quiet);
+  animation-duration: var(--duration-quiet);
+}
+@utility duration-settle {
+  transition-duration: var(--duration-settle);
+  animation-duration: var(--duration-settle);
+}
+@utility duration-turn {
+  transition-duration: var(--duration-turn);
+  animation-duration: var(--duration-turn);
 }
 
 html {
@@ -157,12 +178,94 @@ a:focus-visible,
   }
 }
 .animate-fade-up {
-  animation: clarra-fade-up 600ms var(--ease-settle) both;
+  animation: clarra-fade-up 600ms var(--ease-settle) backwards;
+}
+
+/* Data-state driven animations — modals, menus, popovers, toasts, form errors */
+@keyframes clarra-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes clarra-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes clarra-panel-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes clarra-panel-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.98); }
+}
+@keyframes clarra-menu-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes clarra-menu-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes clarra-toast-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes clarra-toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-6px) scale(0.98); }
+}
+@keyframes clarra-toast-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+@keyframes clarra-error-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes clarra-step-in-forward {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes clarra-step-in-back {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Data-state helpers — apply via data-state="open|closed" on backdrop/panel */
+[data-motion="overlay"][data-state="open"]  { animation: clarra-overlay-in  var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="overlay"][data-state="closed"]{ animation: clarra-overlay-out var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="panel"][data-state="open"]    { animation: clarra-panel-in   var(--duration-settle) var(--ease-settle) both; }
+[data-motion="panel"][data-state="closed"]  { animation: clarra-panel-out  var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="menu"][data-state="open"]     { animation: clarra-menu-in    var(--duration-settle) var(--ease-settle) both; }
+[data-motion="menu"][data-state="closed"]   { animation: clarra-menu-out   var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="toast"][data-state="open"]    { animation: clarra-toast-in   var(--duration-settle) var(--ease-settle) both; }
+[data-motion="toast"][data-state="closed"]  { animation: clarra-toast-out  var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="error"]                        { animation: clarra-error-in   var(--duration-settle) var(--ease-settle) both; }
+[data-motion="step"][data-direction="forward"] { animation: clarra-step-in-forward var(--duration-settle) var(--ease-settle) both; }
+[data-motion="step"][data-direction="back"]    { animation: clarra-step-in-back    var(--duration-settle) var(--ease-settle) both; }
+
+/* View Transitions — native crossfade between /app routes (Turn, 600ms) */
+@supports (view-transition-name: app-main) {
+  ::view-transition-old(app-main),
+  ::view-transition-new(app-main) {
+    animation-duration: var(--duration-turn);
+    animation-timing-function: var(--ease-turn);
+  }
+  ::view-transition-old(app-main) {
+    animation-name: clarra-overlay-out;
+  }
+  ::view-transition-new(app-main) {
+    animation-name: clarra-overlay-in;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-up {
-    animation: none;
+  .animate-fade-up,
+  [data-motion],
+  ::view-transition-old(app-main),
+  ::view-transition-new(app-main) {
+    animation: none !important;
+    transition: none !important;
     opacity: 1;
     transform: none;
   }

@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
+import { RouteFade } from "@/components/ui/route-fade";
 import { UIProvider } from "@/components/providers";
+import { WhatsNewModal } from "@/components/changelog/whats-new-modal";
 import { getSessionUser } from "@/lib/auth-session";
 import { adminDb } from "@/lib/firebase-admin";
 import { listEvents } from "@/lib/slideshow-data";
+import { getChangelog } from "@/lib/changelog";
+import pkg from "../../../package.json";
 
 export default async function AppLayout({
   children,
@@ -20,6 +24,11 @@ export default async function AppLayout({
     | undefined;
   if (!onboardingCompletedAt) redirect("/onboarding");
   const workspaceId = userDoc.get("activeWorkspaceId") as string | undefined;
+  const lastSeenChangelogVersion =
+    (userDoc.get("lastSeenChangelogVersion") as string | null | undefined) ??
+    null;
+  const currentRelease =
+    getChangelog().find((r) => r.version === pkg.version) ?? null;
   let workspaceName = "Workspace";
   let events: Array<{
     id: string;
@@ -58,9 +67,18 @@ export default async function AppLayout({
           userInitials={initials}
           userName={user.name ?? user.email ?? "You"}
           events={events}
+          appVersion={pkg.version}
         />
-        <main className="min-w-0">{children}</main>
+        <main className="min-w-0">
+          <RouteFade>{children}</RouteFade>
+        </main>
       </div>
+      {currentRelease && (
+        <WhatsNewModal
+          release={currentRelease}
+          lastSeenVersion={lastSeenChangelogVersion}
+        />
+      )}
     </UIProvider>
   );
 }

@@ -41,7 +41,7 @@ function NavItem({
     <Link
       href={href}
       className={cn(
-        "mx-2 my-[1px] flex items-center gap-[10px] rounded-[4px] px-[10px] py-[7px] text-[13.5px] tracking-[-0.005em] transition-colors",
+        "mx-2 my-[1px] flex items-center gap-[10px] rounded-[4px] px-[10px] py-[7px] text-[13.5px] tracking-[-0.005em] transition-[background,color] duration-quiet ease-quiet",
         selected
           ? "bg-moss-soft font-medium text-moss"
           : "text-ink hover:bg-[rgba(25,35,26,0.04)]",
@@ -133,6 +133,8 @@ function UserMenu({
       {open && (
         <div
           role="menu"
+          data-motion="menu"
+          data-state="open"
           className="absolute left-[calc(100%+8px)] overflow-hidden rounded-[6px] border border-line bg-surface"
           style={{
             bottom: 0,
@@ -157,16 +159,38 @@ function UserMenu({
   );
 }
 
+function VersionPill({ version }: { version: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        window.dispatchEvent(new CustomEvent("clarra:open-changelog"))
+      }
+      className="mx-2 mb-[6px] flex w-[calc(100%-16px)] items-center justify-between rounded-[4px] px-[10px] py-[6px] text-left transition-colors duration-quiet ease-quiet hover:bg-[rgba(25,35,26,0.04)]"
+    >
+      <span className="flex items-center gap-[7px] text-[11px] tracking-[-0.005em] text-muted">
+        <Icon name="sparkle" size={11} style={{ color: "#3B5A41" }} />
+        What&apos;s new
+      </span>
+      <span className="text-[10.5px] tracking-[-0.005em] text-muted-2">
+        v{version}
+      </span>
+    </button>
+  );
+}
+
 export function Sidebar({
   workspaceName = "Lakeside Hall",
   userInitials = "CL",
   userName = "You",
   events = [],
+  appVersion,
 }: {
   workspaceName?: string;
   userInitials?: string;
   userName?: string;
   events?: SidebarEvent[];
+  appVersion?: string;
 }) {
   const pathname = usePathname();
   const params = useSearchParams();
@@ -267,6 +291,7 @@ export function Sidebar({
 
       <div className="pb-3">
         <div className="mx-4 mb-[10px] mt-2 h-px bg-line" />
+        {appVersion && <VersionPill version={appVersion} />}
         {bottom.map((it) => (
           <NavItem
             key={it.href}
