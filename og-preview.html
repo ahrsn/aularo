@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Clarra — Card Image</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500;1,6..72,600&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper: #f5f1e8;
+      --surface: #fbf8f0;
+      --forest: #19231a;
+      --ink: #0e1410;
+      --moss: #3b5a41;
+      --line: #e3dfd3;
+      --muted: #6b7268;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      background: #2a2f2a;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    /* 1200x800 card image */
+    .card {
+      width: 1200px;
+      height: 800px;
+      background: var(--paper);
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+      padding: 64px 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Subtle brand ambiance */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 50% 40% at 92% 8%, rgba(59,90,65,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 30% at 8% 95%, rgba(25,35,26,0.05) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    /* Top: wordmark only */
+    .top {
+      position: relative;
+      z-index: 2;
+    }
+
+    .wordmark {
+      display: inline-flex;
+      align-items: center;
+      color: var(--ink);
+      gap: 11px;
+    }
+
+    .wordmark svg { width: 26px; height: 26px; flex-shrink: 0; }
+
+    .wordmark-text {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      font-variation-settings: 'opsz' 48;
+    }
+
+    /* Middle: headline block */
+    .middle {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 1020px;
+    }
+
+    .eyebrow {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      margin-bottom: 36px;
+    }
+
+    .headline {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 128px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 0.98;
+      letter-spacing: -0.035em;
+      font-variation-settings: 'opsz' 72;
+      margin-bottom: 36px;
+    }
+
+    .headline em {
+      font-style: italic;
+      font-weight: 500;
+      color: var(--moss);
+    }
+
+    .subline {
+      font-size: 20px;
+      color: var(--muted);
+      line-height: 1.45;
+      letter-spacing: -0.005em;
+      max-width: 620px;
+    }
+
+    /* Bottom: url */
+    .bottom {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .url {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--ink);
+      letter-spacing: -0.015em;
+    }
+
+    .tagline {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: -0.005em;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <!-- Top: wordmark only -->
+    <div class="top">
+      <div class="wordmark">
+        <svg viewBox="0 0 1000 1000" fill="currentColor" aria-hidden="true">
+          <path d="M243.26,310.85l355.46-.47c17.78,1.82,25.85,10.76,24.02,28.82-40.05,104.52-75.94,211.42-118.47,315-10.84,26.41-20.37,48.28-50.83,56.37-117.53,3.77-236.84,3.83-354.32-.02-21.32-5.34-31.14-27.21-24.38-47.75l118.9-313.03c9.74-19.9,27.69-34.52,49.63-38.93Z"/>
+          <path d="M330.65,274.71c9.16-32.46,26.5-58.77,62.95-62.12,45.27-4.16,103.96-.19,150.75-.1,55.47.11,111.9.94,167.68,1.69,22.24.3,53.59-5.45,64.15,19.75,4.78,11.42,3.9,19.47.83,31.11l-121.58,325.89c-6.45,17.79-29.54,38.02-48.99,38.02h-49.72c-.58,0-2.36-2.02-3.89-1.57-.51-.7,2.47-8.22,3.09-10.11,28.74-86.52,73.56-174.53,99.51-260.95,6.74-22.44,7.04-45.29-9.4-63.72-6.68-7.48-26.72-17.9-36.48-17.9h-278.89Z"/>
+          <path d="M517.09,712.86c8.69-12.56,10.19-35.75,23.76-43.83,14.09-8.39,47.98-3.1,65.64-4.28,41.69-2.78,65.2-23.19,81.12-60.27,41.11-95.75,71.28-199.43,110.98-296.09,3.81-7.55,11.06-13.25,19.51-14.67,10.62-1.78,36.52-1.29,47.86-.43,21.02,1.58,32.66,15.41,30.29,36.65l-126.13,339.97c-8.03,21.28-36.83,42.95-59.6,42.95h-193.44Z"/>
+        </svg>
+        <span class="wordmark-text">Clarra</span>
+      </div>
+    </div>
+
+    <!-- Middle: headline -->
+    <div class="middle">
+      <div class="eyebrow">Digital signage</div>
+      <h1 class="headline">
+        Every screen,<br/>
+        <em>one calm dashboard.</em>
+      </h1>
+      <p class="subline">
+        Pair a display in two minutes. Push a slideshow from your browser. No cables, no IT tickets.
+      </p>
+    </div>
+
+    <!-- Bottom: url + tagline -->
+    <div class="bottom">
+      <span class="url">clarra.show</span>
+      <span class="tagline">The calm way to run your screens.</span>
+    </div>
+  </div>
+</body>
+</html>
