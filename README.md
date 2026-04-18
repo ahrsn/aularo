@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Clarra
+
+**v1.0.0-beta.1**
+
+Clarra is a digital signage platform for events, venues, and spaces. Build slideshows from your media library, pair them to physical displays, and schedule content — all from one workspace.
+
+---
+
+## Features
+
+- **Slideshow Library** — create and publish slideshows with portrait, program, quote, and photo slides
+- **Display Management** — pair TVs and screens to your workspace via short code; monitor online/offline status
+- **Schedule** — assign slideshows to displays by time block; build automations for recurring show triggers
+- **Media Library** — upload assets or pull from Google Drive, Dropbox, or Unsplash; scoped per event
+- **Events** — organize slideshows and media around named events with date ranges
+- **Insights** — uptime histograms and display activity analytics
+- **Team** — invite members with owner/editor/viewer roles
+- **Billing** — free, studio, and venue plans via Stripe; 14-day trial
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router), React 19 |
+| Auth & Database | Firebase Auth + Firestore |
+| Storage | Cloudflare R2 |
+| Billing | Stripe |
+| Hosting | Vercel |
+| Styling | Tailwind CSS v4 |
+| Schema | Zod |
 
 ## Getting Started
 
-First, run the development server:
+See [SETUP.md](./SETUP.md) for full local setup instructions (Firebase, env vars, Firestore rules, smoke tests).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+  app/
+    app/          # authenticated dashboard (library, displays, schedule, media, insights, settings)
+    (auth)/       # sign-in / sign-up flows
+    go/[slug]/    # public submission form (guest photo uploads)
+    d/            # public display route
+    screen/       # pairing screen (runs on the physical TV)
+    onboarding/   # first-run wizard
+  components/     # shared UI components (schedule, library, sidebar, modals)
+  lib/            # server actions, Firebase clients, schema, utilities
+```
 
-## Learn More
+## Plans
 
-To learn more about Next.js, take a look at the following resources:
+| Plan | Displays | Features |
+|------|----------|----------|
+| Free | 1 | Core slideshows + pairing |
+| Studio | 5 | + Media library, schedule |
+| Venue | Unlimited | + Automations, insights, integrations |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Changelog
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See [CHANGELOG.md](./CHANGELOG.md).
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private — Chaos Digital Software. All rights reserved.
