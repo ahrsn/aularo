@@ -4,7 +4,9 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { useMountTransition } from "@/components/ui/motion";
 import { togglePublicPreview, updateSlideshow } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 import type { Slideshow } from "@/lib/schema";
 
 type Tab = "playback" | "look" | "schedule" | "access";
@@ -26,6 +28,7 @@ export function SlideshowSettingsModal({
   slideshow: Slideshow | null;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [tab, setTab] = useState<Tab>("playback");
   const [state, setState] = useState<Slideshow | null>(slideshow);
   const [saved, setSaved] = useState("");
@@ -36,7 +39,11 @@ export function SlideshowSettingsModal({
     setTab("playback");
   }, [slideshow]);
 
-  if (!open || !state) return null;
+  const { mounted, state: motionState } = useMountTransition(
+    open && slideshow !== null,
+    320,
+  );
+  if (!mounted || !state) return null;
 
   function applyPatch(patch: Partial<Slideshow>) {
     const next = { ...state!, ...patch };
@@ -64,19 +71,28 @@ export function SlideshowSettingsModal({
 
   async function onTogglePublic(enabled: boolean) {
     startTransition(async () => {
-      const { slug } = await togglePublicPreview({ id: state!.id, enabled });
-      setState({ ...state!, publicSlug: slug });
-      router.refresh();
+      try {
+        const { slug } = await togglePublicPreview({ id: state!.id, enabled });
+        setState({ ...state!, publicSlug: slug });
+        router.refresh();
+        toast.success(enabled ? "Preview link enabled" : "Preview link disabled");
+      } catch (e) {
+        toast.error(e, "Couldn't update preview link.");
+      }
     });
   }
 
   return (
     <div
+      data-motion="overlay"
+      data-state={motionState}
       onClick={onClose}
       className="fixed inset-0 z-[1000] flex items-center justify-center p-6"
-      style={{ background: "rgba(14,20,16,0.42)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
     >
       <div
+        data-motion="panel"
+        data-state={motionState}
         onClick={(e) => e.stopPropagation()}
         className="grid w-full overflow-hidden rounded-[6px] bg-surface"
         style={{

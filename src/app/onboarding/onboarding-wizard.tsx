@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Wordmark } from "@/components/ui/wordmark";
+import { useToast } from "@/components/ui/toast";
 import { completeOnboarding } from "@/lib/actions";
 import type { UseCase, WorkspacePlan } from "@/lib/schema";
 
@@ -110,9 +111,9 @@ export function OnboardingWizard({
   defaultWorkspaceName: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
 
   const [name, setName] = useState(defaultName);
   const [useCase, setUseCase] = useState<UseCase | null>(null);
@@ -125,18 +126,15 @@ export function OnboardingWizard({
   const [plan, setPlan] = useState<WorkspacePlan | null>(null);
 
   function nextStep() {
-    setErr(null);
     setStep((s) => Math.min(s + 1, TOTAL_STEPS));
   }
   function prevStep() {
-    setErr(null);
     setStep((s) => Math.max(s - 1, 1));
   }
 
   async function finish(destination: "/app/library?new=1" | "/app/displays") {
-    setErr(null);
     if (!name.trim() || !useCase || !workspaceName.trim() || !plan) {
-      setErr("Fill out each step first.");
+      toast.error(new Error("Fill out each step first."), "Fill out each step first.");
       return;
     }
     setBusy(true);
@@ -148,10 +146,11 @@ export function OnboardingWizard({
         source: source?.trim() || null,
         plan,
       });
+      toast.success("Workspace created.");
       router.push(destination);
       router.refresh();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Something went wrong");
+      toast.error(e, "Couldn't finish setup.");
       setBusy(false);
     }
   }
@@ -174,53 +173,50 @@ export function OnboardingWizard({
         </div>
 
         <div className="rounded-[6px] border border-line bg-surface p-8">
-          {step === 1 && (
-            <StepName
-              name={name}
-              setName={setName}
-              onNext={nextStep}
-            />
-          )}
-          {step === 2 && (
-            <StepUseCase
-              useCase={useCase}
-              setUseCase={setUseCase}
-              onBack={prevStep}
-              onNext={nextStep}
-            />
-          )}
-          {step === 3 && (
-            <StepWorkspace
-              workspaceName={workspaceName}
-              setWorkspaceName={setWorkspaceName}
-              source={source}
-              setSource={setSource}
-              onBack={prevStep}
-              onNext={nextStep}
-            />
-          )}
-          {step === 4 && (
-            <StepPlan
-              plan={plan}
-              setPlan={setPlan}
-              onBack={prevStep}
-              onNext={nextStep}
-            />
-          )}
-          {step === 5 && (
-            <StepActivation
-              busy={busy}
-              onBack={prevStep}
-              onCreateSlideshow={() => finish("/app/library?new=1")}
-              onPairScreen={() => finish("/app/displays")}
-            />
-          )}
+          <div key={step} data-motion="step">
+            {step === 1 && (
+              <StepName
+                name={name}
+                setName={setName}
+                onNext={nextStep}
+              />
+            )}
+            {step === 2 && (
+              <StepUseCase
+                useCase={useCase}
+                setUseCase={setUseCase}
+                onBack={prevStep}
+                onNext={nextStep}
+              />
+            )}
+            {step === 3 && (
+              <StepWorkspace
+                workspaceName={workspaceName}
+                setWorkspaceName={setWorkspaceName}
+                source={source}
+                setSource={setSource}
+                onBack={prevStep}
+                onNext={nextStep}
+              />
+            )}
+            {step === 4 && (
+              <StepPlan
+                plan={plan}
+                setPlan={setPlan}
+                onBack={prevStep}
+                onNext={nextStep}
+              />
+            )}
+            {step === 5 && (
+              <StepActivation
+                busy={busy}
+                onBack={prevStep}
+                onCreateSlideshow={() => finish("/app/library?new=1")}
+                onPairScreen={() => finish("/app/displays")}
+              />
+            )}
+          </div>
 
-          {err && (
-            <div className="mt-4 rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
-              {err}
-            </div>
-          )}
         </div>
 
         <div className="mt-6 text-center text-[12.5px] tracking-[-0.005em] text-muted-2">

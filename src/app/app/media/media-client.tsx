@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -13,6 +14,8 @@ import {
   deleteMediaAssets,
   moveMediaAssetsToEvent,
 } from "@/lib/actions";
+import { toErrorState, type ErrorState } from "@/lib/errors";
+import { useToast } from "@/components/ui/toast";
 import type { EventDoc, Integration, MediaAsset } from "@/lib/schema";
 
 /* eslint-disable @next/next/no-img-element */
@@ -35,6 +38,7 @@ export function MediaClient({
   integrations: Integration[];
 }) {
   const router = useRouter();
+  const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [, startTransition] = useTransition();
 
@@ -50,7 +54,7 @@ export function MediaClient({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [uploading, setUploading] = useState<UploadingFile[]>([]);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState<ErrorState | null>(null);
   const [dragging, setDragging] = useState(false);
   const dragDepth = useRef(0);
 
@@ -160,6 +164,8 @@ export function MediaClient({
           ? "brand"
           : scope;
 
+    let successCount = 0;
+    let failCount = 0;
     await Promise.all(
       items.map(async (item, idx) => {
         const file = list[idx]!;
@@ -177,13 +183,25 @@ export function MediaClient({
           });
           if (!put.ok) throw new Error(`Upload failed (${put.status})`);
           await commitMediaAsset({ assetId, ok: true });
+          successCount++;
         } catch (e) {
-          setErr(e instanceof Error ? e.message : "Upload failed");
+          failCount++;
+          setErr(toErrorState(e, "Upload failed."));
         } finally {
           setUploading((u) => u.filter((x) => x.id !== item.id));
         }
       }),
     );
+    if (successCount > 0) {
+      toast.success(
+        successCount === 1
+          ? "Media uploaded"
+          : `${successCount} files uploaded`,
+      );
+    }
+    if (failCount > 0) {
+      toast.error(null, `${failCount} file${failCount === 1 ? "" : "s"} failed to upload.`);
+    }
     startTransition(() => router.refresh());
   }
 
@@ -265,8 +283,12 @@ export function MediaClient({
     startTransition(async () => {
       try {
         await deleteMediaAssets({ assetIds: ids });
+        toast.success(
+          ids.length === 1 ? "Media deleted" : `${ids.length} items deleted`,
+        );
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Delete failed");
+        setErr(toErrorState(e, "Delete failed."));
+        toast.error(e, "Delete failed.");
       } finally {
         exitSelect();
         router.refresh();
@@ -277,12 +299,25 @@ export function MediaClient({
   function doMove(targetEventId: string | null) {
     if (selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
+    const count = ids.length;
     setMoveOpen(false);
     startTransition(async () => {
       try {
         await moveMediaAssetsToEvent({ assetIds: ids, eventId: targetEventId });
+        const dest =
+          targetEventId === null
+            ? "Unassigned"
+            : targetEventId === "brand"
+              ? "Brand assets"
+              : (events.find((e) => e.id === targetEventId)?.name ?? "event");
+        toast.success(
+          count === 1
+            ? `Moved to ${dest}`
+            : `${count} items moved to ${dest}`,
+        );
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Move failed");
+        setErr(toErrorState(e, "Move failed."));
+        toast.error(e, "Move failed.");
       } finally {
         exitSelect();
         router.refresh();
@@ -367,7 +402,20 @@ export function MediaClient({
       {err && (
         <div className="mt-4 flex items-start gap-2 rounded-[4px] bg-[#F3E4E0] p-[12px_14px] text-[12.5px] text-[#8B3A2F]">
           <Icon name="warning-circle" size={14} style={{ marginTop: 1 }} />
-          <div className="flex-1">{err}</div>
+          <div className="flex-1">
+            {err.text}
+            {err.upgrade && (
+              <>
+                {" "}
+                <Link
+                  href="/app/settings/billing"
+                  className="font-medium underline hover:opacity-80"
+                >
+                  Upgrade plan →
+                </Link>
+              </>
+            )}
+          </div>
           <button
             onClick={() => setErr(null)}
             aria-label="Dismiss"
@@ -626,12 +674,40 @@ function MediaToolbar({
 }) {
   void scopeLabel;
   void scopeEventId;
+  const typeLabel =
+    typeFilters.size === 0
+      ? "Type"
+      : typeFilters.size === 1
+        ? Array.from(typeFilters)[0] === "image"
+          ? "Images"
+          : Array.from(typeFilters)[0] === "video"
+            ? "Video"
+            : "PDF"
+        : `Type · ${typeFilters.size}`;
+
+  const statusLabel =
+    statusFilters.size === 0
+      ? "Status"
+      : statusFilters.size === 1
+        ? capitalize(Array.from(statusFilters)[0])
+        : `Status · ${statusFilters.size}`;
+
   return (
     <div
-      className="flex flex-wrap items-center gap-2 rounded-[4px] border border-line bg-surface"
-      style={{ padding: "8px 10px" }}
+      className="flex items-center gap-2 rounded-[4px] border border-line bg-surface"
+      style={{ padding: "6px 8px" }}
     >
-      <div className="min-w-[220px] flex-1">
+      <button
+        type="button"
+        onClick={onEnterSelect}
+        aria-label="Select items"
+        title="Select"
+        className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-[4px] text-muted hover:bg-[rgba(25,35,26,0.06)] hover:text-ink"
+      >
+        <Icon name="check-square" size={16} />
+      </button>
+
+      <div className="min-w-0 flex-1">
         <Input
           value={search}
           onChange={(e) => onSearch(e.target.value)}
@@ -640,65 +716,138 @@ function MediaToolbar({
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-[6px]">
-        <Chip
-          active={typeFilters.has("image")}
-          onClick={() => onToggleType("image")}
-        >
-          Images
-        </Chip>
-        <Chip
-          active={typeFilters.has("video")}
-          onClick={() => onToggleType("video")}
-        >
-          Video
-        </Chip>
-        <Chip
-          active={typeFilters.has("pdf")}
-          onClick={() => onToggleType("pdf")}
-        >
-          PDF
-        </Chip>
-        <Divider />
-        <Chip active={unusedOnly} onClick={onToggleUnused}>
-          Unused
-        </Chip>
-        <Divider />
-        <Chip
-          active={statusFilters.has("ready")}
-          onClick={() => onToggleStatus("ready")}
-        >
-          Ready
-        </Chip>
-        <Chip
-          active={statusFilters.has("pending")}
-          onClick={() => onToggleStatus("pending")}
-        >
-          Pending
-        </Chip>
-        <Chip
-          active={statusFilters.has("error")}
-          onClick={() => onToggleStatus("error")}
-        >
-          Error
-        </Chip>
-      </div>
+      <FilterDropdown
+        label={typeLabel}
+        active={typeFilters.size > 0}
+        options={[
+          { value: "image", label: "Images" },
+          { value: "video", label: "Video" },
+          { value: "pdf", label: "PDF" },
+        ]}
+        selected={typeFilters as Set<string>}
+        onToggle={(v) => onToggleType(v as TypeFilter)}
+      />
 
-      <div className="ml-auto flex items-center gap-1">
-        {filtersActive && (
-          <Button variant="text" size="sm" onClick={onClear}>
-            Clear
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          icon="check-square"
-          onClick={onEnterSelect}
-        >
-          Select
+      <FilterDropdown
+        label={statusLabel}
+        active={statusFilters.size > 0}
+        options={[
+          { value: "ready", label: "Ready" },
+          { value: "pending", label: "Pending" },
+          { value: "error", label: "Error" },
+        ]}
+        selected={statusFilters as Set<string>}
+        onToggle={(v) => onToggleStatus(v as StatusFilter)}
+      />
+
+      <Chip active={unusedOnly} onClick={onToggleUnused}>
+        Unused
+      </Chip>
+
+      {filtersActive && (
+        <Button variant="text" size="sm" onClick={onClear}>
+          Clear
         </Button>
-      </div>
+      )}
+    </div>
+  );
+}
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function FilterDropdown({
+  label,
+  active,
+  options,
+  selected,
+  onToggle,
+}: {
+  label: string;
+  active: boolean;
+  options: Array<{ value: string; label: string }>;
+  selected: Set<string>;
+  onToggle: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex cursor-pointer items-center gap-[6px] rounded-[4px] border transition-colors"
+        style={{
+          padding: "6px 10px",
+          fontSize: 12.5,
+          letterSpacing: "-0.005em",
+          borderColor: active ? "#19231A" : "#D4CFC0",
+          background: active ? "#19231A" : "transparent",
+          color: active ? "#F5F1E8" : "#0E1410",
+          fontWeight: active ? 500 : 400,
+        }}
+      >
+        {label}
+        <Icon name={open ? "caret-up" : "caret-down"} size={11} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          data-motion="menu"
+          data-state="open"
+          className="absolute right-0 z-50 mt-[6px] overflow-hidden rounded-[6px] border border-line bg-surface"
+          style={{
+            minWidth: 180,
+            boxShadow: "0 18px 40px -12px rgba(14,20,16,0.28)",
+          }}
+        >
+          {options.map((opt) => {
+            const on = selected.has(opt.value);
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="menuitemcheckbox"
+                aria-checked={on}
+                onClick={() => onToggle(opt.value)}
+                className="flex w-full cursor-pointer items-center justify-between px-[14px] py-[9px] text-left text-[13px] tracking-[-0.005em] text-ink hover:bg-[rgba(25,35,26,0.05)]"
+              >
+                <span>{opt.label}</span>
+                <span
+                  className="flex h-[14px] w-[14px] items-center justify-center rounded-[3px] border"
+                  style={{
+                    borderColor: on ? "#19231A" : "rgba(14,20,16,0.25)",
+                    background: on ? "#19231A" : "transparent",
+                    color: "#F5F1E8",
+                  }}
+                >
+                  {on && <Icon name="check" size={10} />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -730,15 +879,6 @@ function Chip({
     >
       {children}
     </button>
-  );
-}
-
-function Divider() {
-  return (
-    <div
-      aria-hidden
-      style={{ width: 1, height: 16, background: "#E3DFD3", margin: "0 2px" }}
-    />
   );
 }
 
@@ -833,7 +973,7 @@ function MoveToEventMenu({
   return (
     <div
       className="fixed inset-0 z-[110] flex items-center justify-center p-6"
-      style={{ background: "rgba(14,20,16,0.42)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
       onClick={onClose}
     >
       <div
@@ -930,40 +1070,32 @@ function UploadMenu({
           >
             <UploadMenuItem
               icon="desktop"
-              label="From computer"
-              hint="JPG · PNG · MP4 · PDF · 200 MB"
+              label="From this device"
+              hint="Drag, drop, or browse — up to 200 MB"
               onClick={onPickComputer}
             />
             <div className="h-px bg-line" />
             <UploadMenuItem
-              icon="cloud"
-              label="From Google Drive"
+              logo="https://ssl.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png"
+              label="Google Drive"
               hint={
                 driveConnected
-                  ? "Sync a folder"
-                  : "Connect in Settings → Integrations"
+                  ? "Pick a folder to sync"
+                  : "Not connected yet — set it up"
               }
-              href={
-                driveConnected
-                  ? "/app/settings/integrations"
-                  : "/app/settings/integrations"
-              }
-              muted={!driveConnected}
+              href="/app/settings/integrations"
+              connected={driveConnected}
             />
             <UploadMenuItem
-              icon="cloud-arrow-up"
-              label="From Dropbox"
+              logo="https://cdn.simpleicons.org/dropbox"
+              label="Dropbox"
               hint={
                 dropboxConnected
-                  ? "Sync a folder"
-                  : "Connect in Settings → Integrations"
+                  ? "Pick a folder to sync"
+                  : "Not connected yet — set it up"
               }
-              href={
-                dropboxConnected
-                  ? "/app/settings/integrations"
-                  : "/app/settings/integrations"
-              }
-              muted={!dropboxConnected}
+              href="/app/settings/integrations"
+              connected={dropboxConnected}
             />
           </div>
         </>
@@ -974,26 +1106,28 @@ function UploadMenu({
 
 function UploadMenuItem({
   icon,
+  logo,
   label,
   hint,
   onClick,
   href,
-  muted,
+  connected,
 }: {
-  icon: string;
+  icon?: string;
+  logo?: string;
   label: string;
   hint: string;
   onClick?: () => void;
   href?: string;
-  muted?: boolean;
+  connected?: boolean;
 }) {
+  const isIntegration = logo !== undefined;
   const content = (
     <div
-      className="flex w-full cursor-pointer items-start gap-3 px-[16px] py-[12px] text-left transition-colors hover:bg-[rgba(25,35,26,0.04)]"
-      style={{ opacity: muted ? 0.85 : 1 }}
+      className="flex w-full cursor-pointer items-center gap-3 px-[16px] py-[12px] text-left transition-colors hover:bg-[rgba(25,35,26,0.04)]"
     >
       <div
-        className="flex items-center justify-center rounded-[4px]"
+        className="flex shrink-0 items-center justify-center rounded-[5px]"
         style={{
           width: 32,
           height: 32,
@@ -1002,11 +1136,43 @@ function UploadMenuItem({
           color: "#19231A",
         }}
       >
-        <Icon name={icon} size={16} />
+        {logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logo}
+            alt=""
+            width={18}
+            height={18}
+            style={{ width: 18, height: 18, objectFit: "contain" }}
+          />
+        ) : icon ? (
+          <Icon name={icon} size={16} />
+        ) : null}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium tracking-[-0.005em] text-ink">
-          {label}
+        <div className="flex items-center gap-[6px]">
+          <span className="text-[13px] font-medium tracking-[-0.005em] text-ink">
+            {label}
+          </span>
+          {isIntegration && connected && (
+            <span
+              className="inline-flex items-center gap-[4px] rounded-full px-[6px] py-[1px] text-[10px] font-medium tracking-[-0.005em]"
+              style={{
+                background: "rgba(34,94,52,0.08)",
+                color: "#225E34",
+              }}
+            >
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 999,
+                  background: "#3E8A5A",
+                }}
+              />
+              Connected
+            </span>
+          )}
         </div>
         <div className="mt-[1px] text-[11.5px] tracking-[-0.005em] text-muted">
           {hint}
@@ -1016,7 +1182,7 @@ function UploadMenuItem({
         <Icon
           name="arrow-up-right"
           size={13}
-          style={{ color: "#6B7268", marginTop: 4 }}
+          style={{ color: "#6B7268" }}
         />
       )}
     </div>
@@ -1210,7 +1376,7 @@ function PreviewLightbox({
   return (
     <div
       className="fixed inset-0 z-[120] flex"
-      style={{ background: "rgba(14,20,16,0.72)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(14,20,16,0.82)", left: "var(--overlay-left, 0px)" }}
       onClick={onClose}
     >
       <div

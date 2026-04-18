@@ -4,9 +4,11 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
+import { useToast } from "@/components/ui/toast";
 import { submitToQr } from "@/lib/actions";
 
 export function SubmitForm({ slug }: { slug: string }) {
+  const toast = useToast();
   const [fromName, setFromName] = useState("");
   const [message, setMessage] = useState("");
   const [link, setLink] = useState("");
@@ -29,9 +31,13 @@ export function SubmitForm({ slug }: { slug: string }) {
           message: message.trim() || undefined,
           link: link.trim() || undefined,
         });
+        toast.success("Thanks! Your submission is in.");
+        setFromName("");
+        setMessage("");
+        setLink("");
         setSent(true);
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Couldn't send");
+        toast.error(e, "Couldn't send.");
       }
     });
   }
@@ -105,9 +111,7 @@ export function SubmitForm({ slug }: { slug: string }) {
         />
       </label>
       {err && (
-        <div className="rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
-          {err}
-        </div>
+        <div className="text-[12.5px] text-[#8B3A2F]">{err}</div>
       )}
       <Button
         type="submit"

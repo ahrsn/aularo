@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { deleteAutomation, toggleAutomation } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 import type { Automation } from "@/lib/schema";
 
 export function AutomationCard({
@@ -14,6 +15,7 @@ export function AutomationCard({
   onEdit?: (a: Automation) => void;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [on, setOn] = useState(a.on);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -34,8 +36,10 @@ export function AutomationCard({
     startTransition(async () => {
       try {
         await toggleAutomation({ id: a.id, on: next });
-      } catch {
-        setOn(!next); // revert on error
+        toast.success(next ? "Automation enabled" : "Automation disabled");
+      } catch (e) {
+        setOn(!next);
+        toast.error(e, "Couldn't update automation.");
       }
     });
   }
@@ -47,8 +51,9 @@ export function AutomationCard({
       try {
         await deleteAutomation({ id: a.id });
         router.refresh();
+        toast.success("Automation deleted");
       } catch (e) {
-        window.alert(e instanceof Error ? e.message : "Failed to delete");
+        toast.error(e, "Couldn't delete automation.");
       }
     });
   }

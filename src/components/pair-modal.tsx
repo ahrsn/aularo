@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
+import { useMountTransition } from "@/components/ui/motion";
 import { claimPairingCode } from "@/lib/actions";
+import { errorCode, humanizeError } from "@/lib/errors";
+import { useToast } from "@/components/ui/toast";
 
 type Phase = "code" | "linking" | "success" | "error" | "limit";
 
@@ -15,6 +18,7 @@ export function PairModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const toast = useToast();
   const [phase, setPhase] = useState<Phase>("code");
   const [code, setCode] = useState("");
   const [label, setLabel] = useState("");
@@ -29,7 +33,8 @@ export function PairModal({
     }
   }, [open]);
 
-  if (!open) return null;
+  const { mounted, state } = useMountTransition(open, 320);
+  if (!mounted) return null;
 
   const normalized = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
   const displayCode =
@@ -47,26 +52,28 @@ export function PairModal({
     try {
       await claimPairingCode({ code: normalized, label: trimmedLabel });
       setPhase("success");
+      toast.success("Display paired");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to claim";
-      if (msg.includes("DISPLAY_LIMIT_REACHED")) {
+      if (errorCode(e) === "DISPLAY_LIMIT_REACHED") {
         setPhase("limit");
       } else {
         setPhase("error");
-        setErr(msg);
+        setErr(humanizeError(e, "Couldn't pair that code."));
+        toast.error(e, "Couldn't pair that code.");
       }
     }
   }
 
   return (
     <div
+      data-motion="overlay"
+      data-state={state}
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{
-        background: "rgba(14,20,16,0.42)",
-        backdropFilter: "blur(6px)",
-      }}
+      style={{ background: "rgba(14,20,16,0.55)" }}
     >
       <div
+        data-motion="panel"
+        data-state={state}
         className="w-full max-w-[520px] overflow-hidden rounded-[6px] border border-line bg-surface"
         style={{ boxShadow: "0 24px 56px -16px rgba(14,20,16,0.4)" }}
       >
