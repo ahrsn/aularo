@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "./button";
+import { useMountTransition } from "./motion";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -36,14 +37,19 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   useEscapeKey(open, onCancel);
-  if (!open) return null;
+  const { mounted, state } = useMountTransition(open, 320);
+  if (!mounted) return null;
   return (
     <div
+      data-motion="overlay"
+      data-state={state}
       onClick={onCancel}
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{ background: "rgba(14,20,16,0.42)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
     >
       <div
+        data-motion="panel"
+        data-state={state}
         onClick={(e) => e.stopPropagation()}
         role="alertdialog"
         aria-modal="true"
@@ -87,14 +93,19 @@ interface InfoAlertProps {
 
 export function InfoAlert({ open, title, message, onClose }: InfoAlertProps) {
   useEscapeKey(open, onClose);
-  if (!open) return null;
+  const { mounted, state } = useMountTransition(open, 320);
+  if (!mounted) return null;
   return (
     <div
+      data-motion="overlay"
+      data-state={state}
       onClick={onClose}
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{ background: "rgba(14,20,16,0.42)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
     >
       <div
+        data-motion="panel"
+        data-state={state}
         onClick={(e) => e.stopPropagation()}
         role="alertdialog"
         aria-modal="true"
