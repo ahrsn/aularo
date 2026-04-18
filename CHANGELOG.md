@@ -11,6 +11,18 @@ Clarra is live.
 
 This is the first public beta. The whole platform, shipped in one pass. Build your slideshows, pair a screen, and you're running in a few minutes.
 
+### Slideshow Builder
+
+A full visual builder for creating and editing slideshows. Replaced the previous editor with a proper production tool.
+
+- Filmstrip panel for navigating and reordering slides at a glance
+- Live preview canvas that renders exactly what the screen will show
+- Per-slide inspector for editing content, layout, and style
+- Template picker for starting a new slide in seconds
+- Keyboard shortcuts throughout (add, duplicate, delete, navigate)
+- Submissions sheet for reviewing guest photo submissions without leaving the builder
+- Publish menu with draft / live / paused status controls
+
 ### Slideshows
 
 A proper library for the screens in your space. Four slide types to work with: Portrait, Program, Quote, and Photo. Each slideshow has its own pace, transitions, theme, and Ken Burns motion, so a quiet gallery loop and a wedding reception reel can live side by side without stepping on each other.
@@ -26,6 +38,7 @@ Pair a screen in seconds. Open `/screen` on the TV or kiosk browser, type the sh
 - 4–12 character short codes, easy to read from across a room
 - Real-time status: online, offline, pairing
 - Rolling seven-day uptime histogram per display
+- Public claim URL at `/d/[workspace]/[code]` — share a link instead of reading a code out loud
 
 ### Schedule
 
