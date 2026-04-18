@@ -2,14 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PairScreen } from "@/components/show/pair-screen";
-
-function getScreenId(): string {
-  const stored = localStorage.getItem("clarra-screen-id");
-  if (stored) return stored;
-  const id = crypto.randomUUID();
-  localStorage.setItem("clarra-screen-id", id);
-  return id;
-}
+import { getScreenId, setPairedScreen } from "@/lib/screen-id";
 
 type CodeState = {
   code: string;
@@ -86,8 +79,7 @@ export default function ScreenPage() {
         };
         if (data.claimed && data.workspaceId && data.displayId) {
           redirected = true;
-          localStorage.setItem("clarra-display-id", data.displayId);
-          localStorage.setItem("clarra-workspace-id", data.workspaceId);
+          setPairedScreen(data.workspaceId, data.displayId);
           window.location.href = `/screen/${data.displayId}`;
         }
       } catch (e) {

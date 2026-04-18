@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -8,11 +9,18 @@ import { Input } from "@/components/ui/input";
 import { StatusText } from "@/components/ui/status-dot";
 import { PairModal } from "@/components/pair-modal";
 import { ConfirmDialog } from "@/components/ui/alert-dialog";
+import { useMountTransition } from "@/components/ui/motion";
 import {
+  checkShortCodeAvailable,
+  clearDisplayShortCode,
+  createPreassignedDisplay,
   refreshAllDisplays,
   renameDisplay,
+  rotateDisplayShortCode,
   unpairDisplay,
 } from "@/lib/actions";
+import { humanizeError, toErrorState, type ErrorState } from "@/lib/errors";
+import { useToast } from "@/components/ui/toast";
 import type { Display } from "@/lib/schema";
 
 type StatusFilter = "all" | "online" | "offline" | "idle";
@@ -25,11 +33,15 @@ function isOnline(d: Display, nowMs: number) {
 
 export function DisplaysClient({
   initialDisplays,
+  workspaceSlug,
 }: {
   initialDisplays: Display[];
+  workspaceSlug: string | null;
 }) {
   const router = useRouter();
   const [pairOpen, setPairOpen] = useState(false);
+  const [preassignOpen, setPreassignOpen] = useState(false);
+  const [rotating, setRotating] = useState<Display | null>(null);
   const [renaming, setRenaming] = useState<Display | null>(null);
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
@@ -112,6 +124,14 @@ export function DisplaysClient({
               Refresh all
             </Button>
             <Button
+              variant="ghost"
+              icon="plus"
+              onClick={() => setPreassignOpen(true)}
+              title="Create a display with a short code anyone can type"
+            >
+              New display
+            </Button>
+            <Button
               variant="primary"
               icon="plus"
               onClick={() => setPairOpen(true)}
@@ -191,6 +211,8 @@ export function DisplaysClient({
                 key={d.id}
                 d={d}
                 onRename={() => setRenaming(d)}
+                onRotateCode={() => setRotating(d)}
+                workspaceSlug={workspaceSlug}
                 now={now}
               />
             ))
@@ -199,44 +221,6 @@ export function DisplaysClient({
       </div>
 
       <aside className="flex flex-col gap-4 self-start">
-        <div
-          className="rounded-[4px] p-5 text-paper"
-          style={{ background: "#19231A" }}
-        >
-          <div
-            className="font-sans uppercase"
-            style={{
-              fontSize: 10.5,
-              letterSpacing: "0.08em",
-              color: "rgba(245,241,232,0.55)",
-              fontWeight: 500,
-              marginBottom: 10,
-            }}
-          >
-            Pair a new display
-          </div>
-          <div className="text-h2" style={{ fontSize: 17, color: "#F5F1E8" }}>
-            Open{" "}
-            <span
-              className="font-mono"
-              style={{ fontSize: 13, letterSpacing: "0.04em" }}
-            >
-              clarra.show/screen
-            </span>{" "}
-            on any screen.
-          </div>
-          <div className="mt-4">
-            <Button
-              variant="onDark"
-              size="sm"
-              icon="plus"
-              onClick={() => setPairOpen(true)}
-            >
-              Enter code
-            </Button>
-          </div>
-        </div>
-
         <FleetHealth
           total={initialDisplays.length}
           online={online.length}
@@ -252,6 +236,16 @@ export function DisplaysClient({
       </aside>
 
       <PairModal open={pairOpen} onClose={() => setPairOpen(false)} />
+      <PreassignModal
+        open={preassignOpen}
+        onClose={() => setPreassignOpen(false)}
+        workspaceSlug={workspaceSlug}
+      />
+      <RotateCodeModal
+        display={rotating}
+        workspaceSlug={workspaceSlug}
+        onClose={() => setRotating(null)}
+      />
       <RenameModal
         display={renaming}
         onClose={() => setRenaming(null)}
@@ -263,23 +257,43 @@ export function DisplaysClient({
 function DisplayRow({
   d,
   onRename,
+  onRotateCode,
+  workspaceSlug,
   now,
 }: {
   d: Display;
   onRename: () => void;
+  onRotateCode: () => void;
+  workspaceSlug: string | null;
   now: number;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [hover, setHover] = useState(false);
   const [busy, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const online = isOnline(d, now);
 
   function doUnpair() {
     setConfirmOpen(false);
     startTransition(async () => {
-      await unpairDisplay(d.id);
-      router.refresh();
+      try {
+        await unpairDisplay(d.id);
+        toast.success("Display removed");
+        router.refresh();
+      } catch (e) {
+        toast.error(e, "Couldn't unpair display.");
+      }
+    });
+  }
+
+  function copyClaimUrl() {
+    if (!workspaceSlug || !d.shortCode) return;
+    const url = `${window.location.origin}/d/${workspaceSlug}/${d.shortCode}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     });
   }
 
@@ -317,11 +331,31 @@ function DisplayRow({
         }}
       />
       <div className="min-w-0">
-        <div className="truncate text-[14.5px] font-medium tracking-[-0.008em] text-ink">
-          {d.name}
+        <div className="flex items-center gap-2">
+          <span className="truncate text-[14.5px] font-medium tracking-[-0.008em] text-ink">
+            {d.name}
+          </span>
+          {d.shortCode && (
+            <button
+              onClick={copyClaimUrl}
+              disabled={!workspaceSlug}
+              title={
+                workspaceSlug
+                  ? `Copy ${window.location.origin}/d/${workspaceSlug}/${d.shortCode}`
+                  : "Set a workspace slug first"
+              }
+              className="cursor-pointer rounded-[3px] border border-line bg-paper px-[6px] py-[1px] font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink hover:bg-[rgba(25,35,26,0.06)] disabled:cursor-default disabled:opacity-60"
+            >
+              {copied ? "Copied" : d.shortCode}
+            </button>
+          )}
         </div>
         <div className="mt-[2px] truncate text-[12px] tracking-[-0.005em] text-muted">
-          {d.room ?? d.location ?? d.screenId.slice(0, 8).toUpperCase()}
+          {d.room ??
+            d.location ??
+            (d.screenId
+              ? d.screenId.slice(0, 8).toUpperCase()
+              : "Awaiting screen")}
         </div>
       </div>
       <div className="min-w-0 truncate text-[12.5px] tracking-[-0.005em] text-ink">
@@ -333,6 +367,15 @@ function DisplayRow({
       <div className="flex items-center justify-end gap-[2px]">
         {hover ? (
           <>
+            <button
+              onClick={onRotateCode}
+              disabled={busy}
+              className="cursor-pointer rounded-[4px] p-[6px] text-muted hover:bg-[rgba(25,35,26,0.06)] hover:text-ink disabled:opacity-40"
+              aria-label="Rotate short code"
+              title="Short code"
+            >
+              <Icon name="hash" size={14} />
+            </button>
             <button
               onClick={onRename}
               disabled={busy}
@@ -369,28 +412,43 @@ function RenameModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [name, setName] = useState("");
   const [busy, startTransition] = useTransition();
+  const [cached, setCached] = useState<Display | null>(null);
+  useEffect(() => {
+    if (display) setCached(display);
+  }, [display]);
+  const { mounted, state } = useMountTransition(display !== null, 320);
 
-  if (!display) return null;
+  if (!mounted || !cached) return null;
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !cached) return;
     startTransition(async () => {
-      await renameDisplay({ displayId: display!.id, name });
-      router.refresh();
-      onClose();
+      try {
+        await renameDisplay({ displayId: cached.id, name });
+        toast.success("Display renamed");
+        router.refresh();
+        onClose();
+      } catch (e) {
+        toast.error(e, "Couldn't rename display.");
+      }
     });
   }
 
   return (
     <div
+      data-motion="overlay"
+      data-state={state}
       onClick={onClose}
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{ background: "rgba(14,20,16,0.42)", backdropFilter: "blur(6px)" }}
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
     >
       <form
+        data-motion="panel"
+        data-state={state}
         onClick={(e) => e.stopPropagation()}
         onSubmit={onSubmit}
         className="w-full max-w-[420px] overflow-hidden rounded-[6px] border border-line bg-surface"
@@ -402,7 +460,7 @@ function RenameModal({
               Rename display
             </div>
             <div className="text-h2 mt-1" style={{ fontSize: 20 }}>
-              {display.name}
+              {cached.name}
             </div>
           </div>
           <button
@@ -420,7 +478,7 @@ function RenameModal({
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={display.name}
+              placeholder={cached.name}
               autoFocus
               required
             />
@@ -723,90 +781,180 @@ const KIOSK_RECS: {
   tagline: string;
   url: string;
   price: string;
+  icon: string;
 }[] = [
   {
-    name: "Amazon Fire TV Stick 4K Max",
-    tagline: "Cheapest reliable kiosk — Silk browser runs Clarra well.",
+    name: "Fire TV Stick 4K Max",
+    tagline: "Cheapest reliable kiosk. Silk browser runs Clarra well.",
     url: "https://www.amazon.com/dp/B0BW1YXCD6?tag=clarra-20",
-    price: "~$60",
+    price: "60",
+    icon: "device-tablet-speaker",
   },
   {
     name: "Mac mini (M4)",
     tagline: "Silent, 4K-capable, runs 24/7 on Safari or Chrome.",
     url: "https://www.amazon.com/dp/B0DLBHB7X7?tag=clarra-20",
-    price: "~$599",
+    price: "599",
+    icon: "desktop",
   },
   {
     name: "VESA mount bundle",
     tagline: "Hides the mini behind any VESA-compatible TV.",
     url: "https://www.amazon.com/dp/B09PLHL2TY?tag=clarra-20",
-    price: "~$25",
+    price: "25",
+    icon: "push-pin",
   },
 ];
 
 function KioskKit() {
   return (
     <div
-      className="rounded-[4px] border p-5"
+      className="relative overflow-hidden rounded-[5px] border"
       style={{
         borderColor: "var(--line)",
-        background:
-          "linear-gradient(180deg, #FBF8F0 0%, #F5F1E8 100%)",
+        background: "var(--surface)",
       }}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-label">Recommended kit</div>
-        <Icon name="tag" size={12} style={{ color: "var(--muted-2)" }} />
-      </div>
+      {/* Header */}
       <div
-        className="font-serif text-ink"
-        style={{
-          fontSize: 17,
-          fontWeight: 500,
-          letterSpacing: "-0.018em",
-          fontVariationSettings: "'opsz' 48",
-          lineHeight: 1.3,
-        }}
+        className="flex items-baseline justify-between border-b border-line"
+        style={{ padding: "14px 16px 12px" }}
       >
-        Need a screen? Here's what we use.
-      </div>
-      <div className="mt-1 text-[11.5px] leading-[1.5] tracking-[-0.005em] text-muted">
-        Affiliate links — a small cut comes back to Clarra at no extra cost to
-        you.
+        <div className="flex items-center gap-[6px]">
+          <Icon
+            name="tag"
+            size={10}
+            style={{ color: "var(--moss)", opacity: 0.75 }}
+          />
+          <span className="text-label" style={{ letterSpacing: "0.09em" }}>
+            The kit
+          </span>
+        </div>
+        <span
+          className="font-mono uppercase"
+          style={{
+            fontSize: 9,
+            letterSpacing: "0.08em",
+            color: "var(--muted-2)",
+          }}
+        >
+          {KIOSK_RECS.length} picks
+        </span>
       </div>
 
-      <div className="mt-4 flex flex-col gap-[2px]">
-        {KIOSK_RECS.map((r) => (
-          <a
-            key={r.name}
-            href={r.url}
-            target="_blank"
-            rel="sponsored noopener"
-            className="group flex items-start justify-between gap-2 rounded-[4px] px-2 py-[8px] hover:bg-[rgba(25,35,26,0.05)]"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-[6px]">
-                <span className="truncate text-[12.5px] font-medium tracking-[-0.005em] text-ink">
-                  {r.name}
-                </span>
-                <Icon
-                  name="arrow-up-right"
-                  size={11}
-                  style={{
-                    color: "var(--muted-2)",
-                    opacity: 0.6,
-                  }}
-                />
+      {/* Title */}
+      <div style={{ padding: "16px 16px 4px" }}>
+        <div
+          className="font-serif text-ink"
+          style={{
+            fontSize: 17,
+            fontWeight: 500,
+            letterSpacing: "-0.02em",
+            fontVariationSettings: "'opsz' 48",
+            lineHeight: 1.25,
+          }}
+        >
+          What we put on our walls.
+        </div>
+        <div className="mt-[6px] text-[11.5px] leading-[1.5] tracking-[-0.005em] text-muted">
+          Hardware we&rsquo;ve tested and trust for Clarra screens.
+        </div>
+      </div>
+
+      {/* Items */}
+      <ol className="mt-3 flex flex-col">
+        {KIOSK_RECS.map((r, i) => (
+          <li key={r.name}>
+            <a
+              href={r.url}
+              target="_blank"
+              rel="sponsored noopener"
+              className="group relative flex items-center gap-[12px] border-t border-line transition-[background] duration-quiet ease-quiet hover:bg-[rgba(25,35,26,0.035)]"
+              style={{ padding: "12px 16px" }}
+            >
+              {/* Index */}
+              <span
+                aria-hidden
+                className="font-mono"
+                style={{
+                  fontSize: 10,
+                  color: "var(--muted-2)",
+                  letterSpacing: "0.04em",
+                  width: 16,
+                  flexShrink: 0,
+                }}
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+
+              {/* Icon chip */}
+              <span
+                className="flex shrink-0 items-center justify-center rounded-[4px] transition-colors duration-quiet ease-quiet group-hover:bg-moss-soft"
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: "var(--surface-sunk)",
+                  color: "var(--ink)",
+                }}
+              >
+                <Icon name={r.icon} size={14} />
+              </span>
+
+              {/* Text */}
+              <div className="flex min-w-0 flex-1 flex-col">
+                <div className="flex items-center gap-[6px]">
+                  <span className="truncate text-[13px] font-medium tracking-[-0.008em] text-ink">
+                    {r.name}
+                  </span>
+                  <Icon
+                    name="arrow-up-right"
+                    size={11}
+                    style={{ color: "var(--muted-2)" }}
+                    className="shrink-0 opacity-0 transition-opacity duration-quiet ease-quiet group-hover:opacity-100"
+                  />
+                </div>
+                <div className="mt-[1px] line-clamp-1 text-[11px] leading-[1.4] tracking-[-0.003em] text-muted">
+                  {r.tagline}
+                </div>
               </div>
-              <div className="mt-[2px] text-[11px] leading-[1.4] tracking-[-0.005em] text-muted">
-                {r.tagline}
+
+              {/* Price */}
+              <div
+                className="shrink-0 rounded-[3px] border px-[7px] py-[3px] font-mono"
+                style={{
+                  fontSize: 10.5,
+                  letterSpacing: "0.02em",
+                  borderColor: "var(--line)",
+                  background: "var(--paper)",
+                  color: "var(--ink)",
+                }}
+              >
+                <span style={{ color: "var(--muted-2)" }}>$</span>
+                {r.price}
               </div>
-            </div>
-            <div className="shrink-0 font-mono text-[10.5px] uppercase tracking-[0.04em] text-muted">
-              {r.price}
-            </div>
-          </a>
+            </a>
+          </li>
         ))}
+      </ol>
+
+      {/* Footnote */}
+      <div
+        className="border-t border-line"
+        style={{
+          padding: "9px 16px 10px",
+          background: "var(--paper)",
+        }}
+      >
+        <div className="flex items-center gap-[6px] text-[10.5px] leading-[1.4] tracking-[-0.003em] text-muted">
+          <Icon
+            name="info"
+            size={10}
+            style={{ color: "var(--muted-2)", flexShrink: 0 }}
+          />
+          <span>
+            Affiliate links — no cost to you, small cut to Clarra.
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -820,4 +968,613 @@ function timeAgo(ts: number) {
   if (m < 60) return `${m}m`;
   const h = Math.floor(m / 60);
   return `${h}h`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Pre-assign modal — create a display with a human-typable short code
+// ─────────────────────────────────────────────────────────────────────────
+
+type CreatedResult = {
+  displayId: string;
+  shortCode: string;
+  workspaceSlug: string;
+};
+
+function PreassignModal({
+  open,
+  onClose,
+  workspaceSlug,
+}: {
+  open: boolean;
+  onClose: () => void;
+  workspaceSlug: string | null;
+}) {
+  const router = useRouter();
+  const toast = useToast();
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [codeState, setCodeState] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid"
+  >("idle");
+  const [busy, startTransition] = useTransition();
+  const [err, setErr] = useState<ErrorState | null>(null);
+  const [created, setCreated] = useState<CreatedResult | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setName("");
+      setCode("");
+      setCodeState("idle");
+      setErr(null);
+      setCreated(null);
+      setCopied(false);
+    }
+  }, [open]);
+
+  // Debounced availability check.
+  useEffect(() => {
+    if (!code) {
+      setCodeState("idle");
+      return;
+    }
+    if (!/^[A-Z0-9]{4,12}$/.test(code)) {
+      setCodeState("invalid");
+      return;
+    }
+    setCodeState("checking");
+    const t = setTimeout(async () => {
+      try {
+        const res = await checkShortCodeAvailable({ shortCode: code });
+        setCodeState(res.available ? "available" : "taken");
+      } catch {
+        setCodeState("idle");
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [code]);
+
+  const { mounted, state } = useMountTransition(open, 320);
+  if (!mounted) return null;
+
+  const normalized = code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+  const canSubmit =
+    name.trim().length >= 1 &&
+    (code === "" || codeState === "available") &&
+    !busy;
+
+  function onGenerate() {
+    // Light-weight client-side generator; server regenerates on collision.
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let out = "";
+    for (let i = 0; i < 5; i++)
+      out += alphabet[Math.floor(Math.random() * alphabet.length)];
+    setCode(out);
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit || !workspaceSlug) return;
+    setErr(null);
+    startTransition(async () => {
+      try {
+        const result = await createPreassignedDisplay({
+          name: name.trim(),
+          shortCode: normalized || undefined,
+        });
+        setCreated(result);
+        toast.success("Display created");
+        router.refresh();
+      } catch (e) {
+        if (e instanceof Error && e.message === "CODE_TAKEN") {
+          setCodeState("taken");
+        } else {
+          setErr(toErrorState(e, "Couldn't create display."));
+        }
+      }
+    });
+  }
+
+  function copyUrl() {
+    if (!created) return;
+    const url = `${window.location.origin}/d/${created.workspaceSlug}/${created.shortCode}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
+  const claimUrl = created
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/d/${created.workspaceSlug}/${created.shortCode}`
+    : null;
+
+  return (
+    <div
+      data-motion="overlay"
+      data-state={state}
+      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
+    >
+      <form
+        data-motion="panel"
+        data-state={state}
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={onSubmit}
+        className="w-full max-w-[520px] overflow-hidden rounded-[6px] border border-line bg-surface"
+        style={{ boxShadow: "0 24px 56px -16px rgba(14,20,16,0.4)" }}
+      >
+        <div className="flex items-center justify-between border-b border-line p-[18px_22px]">
+          <div>
+            <div className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted">
+              New display
+            </div>
+            <div className="text-h2 mt-1" style={{ fontSize: 22 }}>
+              {created ? "Display ready to pair" : "Add a display anyone can pair"}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer p-[6px] text-muted hover:text-ink"
+            aria-label="Close"
+          >
+            <Icon name="x" size={18} />
+          </button>
+        </div>
+
+        {!created && !workspaceSlug && (
+          <div className="flex flex-col gap-4 p-[22px]">
+            <div
+              className="rounded-[4px] border p-[14px_16px]"
+              style={{
+                borderColor: "rgba(139,107,47,0.28)",
+                background: "rgba(243,235,216,0.6)",
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                  style={{ background: "#F3EBD8", color: "#8B6B2F" }}
+                >
+                  <Icon name="warning" size={14} />
+                </div>
+                <div>
+                  <div
+                    className="font-serif text-ink"
+                    style={{ fontSize: 16, letterSpacing: "-0.018em" }}
+                  >
+                    Set a workspace slug first.
+                  </div>
+                  <div className="mt-1 text-[12.5px] leading-[1.5] tracking-[-0.005em] text-muted">
+                    Pre-assigned displays use URLs like{" "}
+                    <span className="font-mono text-[11.5px]">
+                      /d/your-slug/LOBBY
+                    </span>
+                    . Without a slug there&rsquo;s nothing to type.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-line pt-4">
+              <Button variant="ghost" type="button" onClick={onClose}>
+                Cancel
+              </Button>
+              <Link href="/app/settings/workspace">
+                <Button variant="primary" type="button" iconRight="arrow-right">
+                  Go to settings
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {!created && workspaceSlug && (
+          <div className="flex flex-col gap-4 p-[22px]">
+            <p className="font-serif text-[14.5px] leading-[1.5] text-[#3A433B]">
+              Whoever&rsquo;s at the TV types{" "}
+              <span className="rounded bg-[rgba(25,35,26,0.07)] px-[7px] py-[2px] font-mono text-[12.5px]">
+                {typeof window !== "undefined" ? window.location.host : ""}/d/{workspaceSlug}/CODE
+              </span>
+              . No login, no admin access.
+            </p>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-label">Display name</span>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Lobby TV, Ballroom Left"
+                autoFocus
+                required
+              />
+            </label>
+
+            <div className="flex flex-col gap-[6px]">
+              <span className="text-label">Short code</span>
+              <div
+                className="group flex items-center rounded-[4px] border bg-paper transition-colors focus-within:border-moss"
+                style={{
+                  borderColor:
+                    codeState === "taken" || codeState === "invalid"
+                      ? "rgba(139,58,47,0.45)"
+                      : "var(--line)",
+                }}
+              >
+                <input
+                  value={code}
+                  onChange={(e) =>
+                    setCode(
+                      e.target.value
+                        .toUpperCase()
+                        .replace(/[^A-Z0-9]/g, "")
+                        .slice(0, 12),
+                    )
+                  }
+                  placeholder="LOBBY"
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  spellCheck={false}
+                  className="flex-1 bg-transparent px-3 py-[10px] font-mono text-[18px] uppercase tracking-[0.1em] text-ink outline-none placeholder:text-muted-2"
+                />
+                <InlineCodeStatus state={codeState} />
+                <button
+                  type="button"
+                  onClick={onGenerate}
+                  className="flex cursor-pointer items-center gap-[5px] border-l border-line px-[12px] py-[10px] font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted hover:bg-[rgba(25,35,26,0.04)] hover:text-ink"
+                  title="Auto-generate a random code"
+                >
+                  <Icon name="arrows-clockwise" size={11} />
+                  Generate
+                </button>
+              </div>
+              <div className="text-[11.5px] tracking-[-0.005em] text-muted">
+                {codeState === "taken"
+                  ? "That code is already used by another display."
+                  : codeState === "invalid"
+                    ? "Use 4-12 letters or numbers."
+                    : "4-12 letters or numbers. Leave blank to auto-generate."}
+              </div>
+            </div>
+
+            {err && (
+              <div className="rounded-[4px] bg-[rgba(139,58,47,0.08)] px-3 py-2 text-[12.5px] text-[#8B3A2F]">
+                {err.text}
+                {err.upgrade && (
+                  <>
+                    {" "}
+                    <Link
+                      href="/app/settings/billing"
+                      className="font-medium underline hover:opacity-80"
+                      onClick={onClose}
+                    >
+                      Upgrade plan →
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 border-t border-line pt-4">
+              <Button variant="ghost" type="button" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={!canSubmit || !workspaceSlug}
+              >
+                {busy ? "Creating…" : "Create display"}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {created && claimUrl && (
+          <div className="flex flex-col gap-4 p-[22px]">
+            <div className="rounded-[4px] border border-line bg-paper p-[14px_16px]">
+              <div className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted">
+                Pair URL
+              </div>
+              <div
+                className="mt-1 truncate font-mono text-[13px] text-ink"
+                title={claimUrl}
+              >
+                {claimUrl}
+              </div>
+            </div>
+            <p className="font-serif text-[14.5px] leading-[1.5] text-[#3A433B]">
+              Print this, text it, or drop it on the run-of-show sheet. Anyone
+              who types it into a browser will pair that TV to{" "}
+              <span className="font-medium">{name}</span> and start playing
+              instantly.
+            </p>
+            <div className="flex justify-end gap-2 border-t border-line pt-4">
+              <Button variant="ghost" type="button" onClick={copyUrl}>
+                {copied ? "Copied" : "Copy URL"}
+              </Button>
+              <Button variant="primary" type="button" onClick={onClose}>
+                Done
+              </Button>
+            </div>
+          </div>
+        )}
+      </form>
+    </div>
+  );
+}
+
+function InlineCodeStatus({
+  state,
+}: {
+  state: "idle" | "checking" | "available" | "taken" | "invalid";
+}) {
+  if (state === "idle") return null;
+  const map = {
+    checking: { label: "Checking", color: "var(--muted)", dot: "#B8B2A3" },
+    available: { label: "Available", color: "#3B5A41", dot: "#3B5A41" },
+    taken: { label: "Taken", color: "#8B3A2F", dot: "#8B3A2F" },
+    invalid: { label: "Invalid", color: "#8B6B2F", dot: "#8B6B2F" },
+  } as const;
+  const entry = map[state];
+  return (
+    <div
+      className="flex shrink-0 items-center gap-[6px] px-[10px] font-mono text-[10.5px] uppercase tracking-[0.06em]"
+      style={{ color: entry.color }}
+    >
+      <span
+        className="inline-block rounded-full"
+        style={{ width: 6, height: 6, background: entry.dot }}
+      />
+      {entry.label}
+    </div>
+  );
+}
+
+function CodeStatusChip({
+  state,
+}: {
+  state: "idle" | "checking" | "available" | "taken" | "invalid";
+}) {
+  if (state === "idle")
+    return (
+      <div className="shrink-0 font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-2">
+        —
+      </div>
+    );
+  const map = {
+    checking: { label: "Checking", color: "var(--muted)" },
+    available: { label: "Available", color: "#3B5A41" },
+    taken: { label: "Taken", color: "#8B3A2F" },
+    invalid: { label: "Invalid", color: "#8B6B2F" },
+  } as const;
+  const entry = map[state];
+  return (
+    <div
+      className="shrink-0 font-mono text-[10.5px] uppercase tracking-[0.06em]"
+      style={{ color: entry.color }}
+    >
+      {entry.label}
+    </div>
+  );
+}
+
+function RotateCodeModal({
+  display,
+  workspaceSlug,
+  onClose,
+}: {
+  display: Display | null;
+  workspaceSlug: string | null;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const toast = useToast();
+  const [code, setCode] = useState("");
+  const [codeState, setCodeState] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid"
+  >("idle");
+  const [busy, startTransition] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+  const [cached, setCached] = useState<Display | null>(null);
+  const { mounted, state } = useMountTransition(display !== null, 320);
+
+  useEffect(() => {
+    if (display) {
+      setCached(display);
+      setCode("");
+      setCodeState("idle");
+      setErr(null);
+    }
+  }, [display]);
+
+  useEffect(() => {
+    if (!code) {
+      setCodeState("idle");
+      return;
+    }
+    if (!/^[A-Z0-9]{4,12}$/.test(code)) {
+      setCodeState("invalid");
+      return;
+    }
+    if (display?.shortCode === code) {
+      setCodeState("available");
+      return;
+    }
+    setCodeState("checking");
+    const t = setTimeout(async () => {
+      try {
+        const res = await checkShortCodeAvailable({ shortCode: code });
+        setCodeState(res.available ? "available" : "taken");
+      } catch {
+        setCodeState("idle");
+      }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [code, display?.shortCode]);
+
+  if (!mounted || !cached) return null;
+
+  function doRotate(newCode?: string) {
+    setErr(null);
+    startTransition(async () => {
+      try {
+        await rotateDisplayShortCode({
+          displayId: cached!.id,
+          newShortCode: newCode,
+        });
+        toast.success("Short code rotated");
+        router.refresh();
+        onClose();
+      } catch (e) {
+        if (e instanceof Error && e.message === "CODE_TAKEN") {
+          setCodeState("taken");
+        } else {
+          setErr(humanizeError(e, "Couldn't rotate code."));
+          toast.error(e, "Couldn't rotate code.");
+        }
+      }
+    });
+  }
+
+  function doClear() {
+    setErr(null);
+    startTransition(async () => {
+      try {
+        await clearDisplayShortCode(cached!.id);
+        toast.success("Short code removed");
+        router.refresh();
+        onClose();
+      } catch (e) {
+        setErr(humanizeError(e, "Couldn't remove code."));
+        toast.error(e, "Couldn't remove code.");
+      }
+    });
+  }
+
+  const canSubmit =
+    code.length > 0 && (codeState === "available") && !busy;
+
+  return (
+    <div
+      data-motion="overlay"
+      data-state={state}
+      onClick={onClose}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
+    >
+      <div
+        data-motion="panel"
+        data-state={state}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[480px] overflow-hidden rounded-[6px] border border-line bg-surface"
+        style={{ boxShadow: "0 24px 56px -16px rgba(14,20,16,0.4)" }}
+      >
+        <div className="flex items-center justify-between border-b border-line p-[18px_22px]">
+          <div>
+            <div className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted">
+              Short code
+            </div>
+            <div className="text-h2 mt-1" style={{ fontSize: 20 }}>
+              {cached.name}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="cursor-pointer p-[6px] text-muted hover:text-ink"
+            aria-label="Close"
+          >
+            <Icon name="x" size={18} />
+          </button>
+        </div>
+        <div className="flex flex-col gap-4 p-[22px]">
+          <div className="flex flex-col gap-1">
+            <div className="text-label">Current code</div>
+            <div className="font-mono text-[18px] tracking-[0.08em] text-ink">
+              {cached.shortCode ?? "—"}
+            </div>
+            {workspaceSlug && cached.shortCode && (
+              <div className="truncate font-mono text-[11px] tracking-[0.04em] text-muted">
+                {typeof window !== "undefined" ? window.location.host : ""}/d/{workspaceSlug}/{cached.shortCode}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-[6px]">
+            <div className="text-label">Rotate to</div>
+            <div
+              className="flex items-center rounded-[4px] border bg-paper transition-colors focus-within:border-moss"
+              style={{
+                borderColor:
+                  codeState === "taken" || codeState === "invalid"
+                    ? "rgba(139,58,47,0.45)"
+                    : "var(--line)",
+              }}
+            >
+              <input
+                value={code}
+                onChange={(e) =>
+                  setCode(
+                    e.target.value
+                      .toUpperCase()
+                      .replace(/[^A-Z0-9]/g, "")
+                      .slice(0, 12),
+                  )
+                }
+                placeholder="Leave blank to auto-generate"
+                inputMode="text"
+                autoCapitalize="characters"
+                spellCheck={false}
+                className="flex-1 bg-transparent px-3 py-[10px] font-mono text-[16px] uppercase tracking-[0.1em] text-ink outline-none placeholder:text-muted-2"
+              />
+              <InlineCodeStatus state={codeState} />
+            </div>
+            <div className="text-[11.5px] tracking-[-0.005em] text-muted">
+              {codeState === "taken"
+                ? "That code is already used by another display."
+                : codeState === "invalid"
+                  ? "Use 4-12 letters or numbers."
+                  : "The old code stops working immediately. Any screen already paired keeps running."}
+            </div>
+          </div>
+
+          {err && (
+            <div className="rounded-[4px] bg-[rgba(139,58,47,0.08)] px-3 py-2 text-[12.5px] text-[#8B3A2F]">
+              {err}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between border-t border-line pt-4">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={doClear}
+              disabled={busy || !cached.shortCode}
+            >
+              Remove code
+            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => doRotate(undefined)}
+                disabled={busy}
+              >
+                Auto-generate
+              </Button>
+              <Button
+                variant="primary"
+                type="button"
+                onClick={() => doRotate(code)}
+                disabled={!canSubmit}
+              >
+                {busy ? "Rotating…" : "Rotate"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

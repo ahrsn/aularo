@@ -6,13 +6,18 @@ import { listDisplays } from "@/lib/slideshow-data";
 import { DisplaysClient } from "./displays-client";
 
 export default async function DisplaysPage() {
-  const { workspaceId } = await requireActiveWorkspace();
+  const { workspaceId, workspace } = await requireActiveWorkspace();
   const displays = await listDisplays(workspaceId);
+  const workspaceSlug =
+    (workspace as { slug?: string | null }).slug ?? null;
 
   return (
     <>
       <Topbar crumb="Displays" actions={<DisplaysTopbarActions />} />
-      <DisplaysClient initialDisplays={displays} />
+      <DisplaysClient
+        initialDisplays={displays}
+        workspaceSlug={workspaceSlug}
+      />
     </>
   );
 }
