@@ -15,6 +15,8 @@ import {
   deleteSlideshow,
   setSlideshowEvent,
 } from "@/lib/actions";
+import { StaggerList } from "@/components/ui/motion";
+import { useToast } from "@/components/ui/toast";
 import type { Display, EventDoc, Slideshow } from "@/lib/schema";
 
 type Filter = "All" | "Playing" | "Drafts" | "Paused";
@@ -60,6 +62,7 @@ export function LibraryClient({
     router.replace(`/app/library?${next.toString()}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlEvent, activeEvent]);
+  const toast = useToast();
   const [settingsFor, setSettingsFor] = useState<Slideshow | null>(null);
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -98,11 +101,16 @@ export function LibraryClient({
     const name = window.prompt("Slideshow name?");
     if (!name) return;
     startTransition(async () => {
-      const { id } = await createSlideshow({ name });
-      if (activeEvent !== UNASSIGNED) {
-        await setSlideshowEvent({ slideshowId: id, eventId: activeEvent });
+      try {
+        const { id } = await createSlideshow({ name });
+        if (activeEvent !== UNASSIGNED) {
+          await setSlideshowEvent({ slideshowId: id, eventId: activeEvent });
+        }
+        router.refresh();
+        toast.success("Slideshow created");
+      } catch (e) {
+        toast.error(e, "Couldn't create slideshow.");
       }
-      router.refresh();
     });
   }
 
@@ -115,8 +123,13 @@ export function LibraryClient({
     const id = deleteId;
     setDeleteId(null);
     startTransition(async () => {
-      await deleteSlideshow(id);
-      router.refresh();
+      try {
+        await deleteSlideshow(id);
+        router.refresh();
+        toast.success("Slideshow deleted");
+      } catch (e) {
+        toast.error(e, "Couldn't delete slideshow.");
+      }
     });
   }
 
@@ -205,15 +218,17 @@ export function LibraryClient({
             <div>Updated</div>
             <div></div>
           </div>
-          {visible.map((s) => (
-            <SlideshowRow
-              key={s.id}
-              s={s}
-              displaysById={displayByAssignment.get(s.id) ?? []}
-              onDelete={() => onDelete(s.id)}
-              onOpenSettings={() => setSettingsFor(s)}
-            />
-          ))}
+          <StaggerList>
+            {visible.map((s) => (
+              <SlideshowRow
+                key={s.id}
+                s={s}
+                displaysById={displayByAssignment.get(s.id) ?? []}
+                onDelete={() => onDelete(s.id)}
+                onOpenSettings={() => setSettingsFor(s)}
+              />
+            ))}
+          </StaggerList>
           {visible.length === 0 && (
             <div className="py-14 text-center">
               <div className="text-h2" style={{ fontSize: 20 }}>

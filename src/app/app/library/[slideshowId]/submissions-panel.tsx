@@ -10,6 +10,7 @@ import {
   rejectSubmission,
   toggleQrSubmissions,
 } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 import type { QrSubmission } from "@/lib/slideshow-data";
 
 export function SubmissionsPanel({
@@ -24,6 +25,7 @@ export function SubmissionsPanel({
   baseUrl: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [slug, setSlug] = useState<string | null>(initialSlug);
   const [busy, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
@@ -32,12 +34,17 @@ export function SubmissionsPanel({
 
   function onToggle() {
     startTransition(async () => {
-      const res = await toggleQrSubmissions({
-        id: slideshowId,
-        enabled: !slug,
-      });
-      setSlug(res.slug);
-      router.refresh();
+      try {
+        const res = await toggleQrSubmissions({
+          id: slideshowId,
+          enabled: !slug,
+        });
+        setSlug(res.slug);
+        router.refresh();
+        toast.success(res.slug ? "Submissions enabled" : "Submissions disabled");
+      } catch (e) {
+        toast.error(e, "Couldn't update submissions.");
+      }
     });
   }
 
@@ -50,15 +57,25 @@ export function SubmissionsPanel({
 
   function onApprove(id: string) {
     startTransition(async () => {
-      await approveSubmission({ submissionId: id });
-      router.refresh();
+      try {
+        await approveSubmission({ submissionId: id });
+        router.refresh();
+        toast.success("Submission approved");
+      } catch (e) {
+        toast.error(e, "Couldn't approve submission.");
+      }
     });
   }
 
   function onReject(id: string) {
     startTransition(async () => {
-      await rejectSubmission(id);
-      router.refresh();
+      try {
+        await rejectSubmission(id);
+        router.refresh();
+        toast.success("Submission rejected");
+      } catch (e) {
+        toast.error(e, "Couldn't reject submission.");
+      }
     });
   }
 

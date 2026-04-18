@@ -1,5 +1,4 @@
 import { Topbar } from "@/components/layout/topbar";
-import { Button } from "@/components/ui/button";
 import { requireActiveWorkspace } from "@/lib/workspace";
 import {
   listDisplays,
@@ -23,14 +22,7 @@ export default async function LibraryPage() {
     <>
       <Topbar
         crumb="Slideshows"
-        actions={
-          <>
-            <Button variant="ghost" icon="upload-simple">
-              Import
-            </Button>
-            <NewSlideshowButton />
-          </>
-        }
+        actions={<NewSlideshowButton />}
       />
       <LibraryClient
         initialSlideshows={safe}
