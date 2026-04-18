@@ -11,6 +11,7 @@ import { createSignedUploadUrl, r2PublicUrl } from "./r2";
 import { PRICE_IDS, appBaseUrl, stripe, type StripePlan } from "./stripe";
 import {
   ShortCodeSchema,
+  SlideKindSchema,
   UseCaseSchema,
   WorkspacePlanSchema,
   WorkspaceSlugSchema,
@@ -98,22 +99,169 @@ export async function updateSlideshow(
 
 const addSlideSchema = z.object({
   slideshowId: z.string(),
-  kind: z.enum(["portrait", "program", "quote", "photo"]),
+  kind: SlideKindSchema,
   data: z.record(z.string(), z.any()).default({}),
+  afterSlideId: z.string().optional(),
 });
 
 export async function addSlide(input: z.infer<typeof addSlideSchema>) {
-  const { slideshowId, kind, data } = addSlideSchema.parse(input);
+  const { slideshowId, kind, data, afterSlideId } = addSlideSchema.parse(input);
   const { uid, userName, workspaceId } = await requireActiveWorkspace();
   const ref = workspaceRef(workspaceId).collection("slideshows").doc(slideshowId);
   const slide = { id: randomUUID(), kind, data };
-  await ref.update({
-    slides: FieldValue.arrayUnion(slide),
-    updatedAt: Date.now(),
-    updatedBy: userName ?? uid,
-  });
-  revalidatePath("/app/library");
+  if (!afterSlideId) {
+    await ref.update({
+      slides: FieldValue.arrayUnion(slide),
+      updatedAt: Date.now(),
+      updatedBy: userName ?? uid,
+    });
+  } else {
+    await adminDb().runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error("SLIDESHOW_NOT_FOUND");
+      const slides = (snap.get("slides") ?? []) as Array<{ id: string }>;
+      const insertAt = slides.findIndex((s) => s.id === afterSlideId);
+      const next = [...slides];
+      next.splice(insertAt < 0 ? next.length : insertAt + 1, 0, slide);
+      tx.update(ref, {
+        slides: next,
+        updatedAt: Date.now(),
+        updatedBy: userName ?? uid,
+      });
+    });
+  }
+  revalidatePath(`/app/library/${slideshowId}`);
   return slide;
+}
+
+const updateSlideDataSchema = z.object({
+  slideshowId: z.string(),
+  slideId: z.string(),
+  data: z.record(z.string(), z.any()),
+  durationMs: z.number().int().min(1000).max(120_000).nullable().optional(),
+  hidden: z.boolean().optional(),
+});
+
+/**
+ * Merge updates into a single slide. Pass a full replacement `data` object
+ * (the client typically does a shallow merge locally then sends the result).
+ * Returns a light ack the client uses to drive the autosave status pill.
+ */
+export async function updateSlide(input: z.infer<typeof updateSlideDataSchema>) {
+  const { slideshowId, slideId, data, durationMs, hidden } =
+    updateSlideDataSchema.parse(input);
+  const { uid, userName, workspaceId } = await requireActiveWorkspace();
+  const ref = workspaceRef(workspaceId).collection("slideshows").doc(slideshowId);
+  const savedAt = Date.now();
+  await adminDb().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new Error("SLIDESHOW_NOT_FOUND");
+    const slides = (snap.get("slides") ?? []) as Array<{
+      id: string;
+      kind: string;
+      data: Record<string, unknown>;
+      durationMs?: number;
+      hidden?: boolean;
+    }>;
+    const next = slides.map((s) => {
+      if (s.id !== slideId) return s;
+      const merged = { ...s, data };
+      if (durationMs === null) delete merged.durationMs;
+      else if (typeof durationMs === "number") merged.durationMs = durationMs;
+      if (typeof hidden === "boolean") merged.hidden = hidden;
+      return merged;
+    });
+    tx.update(ref, {
+      slides: next,
+      updatedAt: savedAt,
+      updatedBy: userName ?? uid,
+    });
+  });
+  return { ok: true, savedAt };
+}
+
+const duplicateSlideSchema = z.object({
+  slideshowId: z.string(),
+  slideId: z.string(),
+});
+
+export async function duplicateSlide(
+  input: z.infer<typeof duplicateSlideSchema>,
+) {
+  const { slideshowId, slideId } = duplicateSlideSchema.parse(input);
+  const { uid, userName, workspaceId } = await requireActiveWorkspace();
+  const ref = workspaceRef(workspaceId).collection("slideshows").doc(slideshowId);
+  const newId = randomUUID();
+  await adminDb().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new Error("SLIDESHOW_NOT_FOUND");
+    const slides = (snap.get("slides") ?? []) as Array<{
+      id: string;
+      kind: string;
+      data: Record<string, unknown>;
+    }>;
+    const idx = slides.findIndex((s) => s.id === slideId);
+    if (idx < 0) throw new Error("SLIDE_NOT_FOUND");
+    const clone = {
+      ...slides[idx],
+      id: newId,
+      data: { ...(slides[idx].data ?? {}) },
+    };
+    const next = [...slides];
+    next.splice(idx + 1, 0, clone);
+    tx.update(ref, {
+      slides: next,
+      updatedAt: Date.now(),
+      updatedBy: userName ?? uid,
+    });
+  });
+  revalidatePath(`/app/library/${slideshowId}`);
+  return { id: newId };
+}
+
+const setSlideshowStatusSchema = z.object({
+  slideshowId: z.string(),
+  status: z.enum(["live", "draft", "paused"]),
+});
+
+export async function setSlideshowStatus(
+  input: z.infer<typeof setSlideshowStatusSchema>,
+) {
+  const { slideshowId, status } = setSlideshowStatusSchema.parse(input);
+  const { uid, userName, workspaceId } = await requireActiveWorkspace();
+  await workspaceRef(workspaceId)
+    .collection("slideshows")
+    .doc(slideshowId)
+    .update({
+      status,
+      updatedAt: Date.now(),
+      updatedBy: userName ?? uid,
+    });
+  revalidatePath(`/app/library/${slideshowId}`);
+  return { ok: true };
+}
+
+const renameSlideshowSchema = z.object({
+  slideshowId: z.string(),
+  name: z.string().min(1).max(120),
+});
+
+export async function renameSlideshow(
+  input: z.infer<typeof renameSlideshowSchema>,
+) {
+  const { slideshowId, name } = renameSlideshowSchema.parse(input);
+  const { uid, userName, workspaceId } = await requireActiveWorkspace();
+  await workspaceRef(workspaceId)
+    .collection("slideshows")
+    .doc(slideshowId)
+    .update({
+      name,
+      updatedAt: Date.now(),
+      updatedBy: userName ?? uid,
+    });
+  revalidatePath(`/app/library/${slideshowId}`);
+  revalidatePath(`/app/library`);
+  return { ok: true };
 }
 
 const deleteSlideSchema = z.object({

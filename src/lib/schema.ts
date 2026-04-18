@@ -9,14 +9,69 @@ import { z } from "zod";
 export const SlideshowStatusSchema = z.enum(["live", "draft", "paused"]);
 export type SlideshowStatus = z.infer<typeof SlideshowStatusSchema>;
 
-export const SlideKindSchema = z.enum(["portrait", "program", "quote", "photo"]);
+export const SlideKindSchema = z.enum([
+  // Existing text/media kinds
+  "portrait",
+  "program",
+  "quote",
+  "photo",
+  // v1 expansion — media
+  "video",
+  "gallery",
+  // v1 expansion — text
+  "announcement",
+  "markdown",
+  // v1 expansion — data
+  "countdown",
+  "weather",
+  "clock",
+  "event-card",
+  // v1 expansion — composite
+  "slideshow-embed",
+]);
 export type SlideKind = z.infer<typeof SlideKindSchema>;
+
+/**
+ * Slide kind families — used by SlideRenderer to dispatch to one of four
+ * renderer components. Adding a new kind = add an entry here + extend the
+ * corresponding renderer family with a new preset.
+ */
+export const SLIDE_KIND_FAMILY = {
+  portrait: "text",
+  program: "text",
+  quote: "text",
+  announcement: "text",
+  markdown: "text",
+  photo: "media",
+  video: "media",
+  gallery: "media",
+  countdown: "data",
+  weather: "data",
+  clock: "data",
+  "event-card": "data",
+  "slideshow-embed": "composite",
+} as const satisfies Record<SlideKind, "text" | "media" | "data" | "composite">;
+
+export type SlideKindFamily = (typeof SLIDE_KIND_FAMILY)[SlideKind];
+
+export const SlideThemeOverrideSchema = z.object({
+  mode: z.enum(["dark", "light"]).optional(),
+  accent: z.string().optional(),
+});
+export type SlideThemeOverride = z.infer<typeof SlideThemeOverrideSchema>;
 
 export const SlideSchema = z.object({
   id: z.string(),
   kind: SlideKindSchema,
-  // Free-form payload: title, body, caption, eyebrow, image, items, quote, by, credit
+  // Free-form payload — shape depends on `kind`. Per-kind shapes are
+  // declared as TS types in src/components/slides/types.ts so editor
+  // components get type hints without a breaking Zod discriminated-union
+  // migration for existing docs.
   data: z.record(z.string(), z.any()).default({}),
+  // Per-slide overrides (all optional). Missing = fall back to slideshow-level settings.
+  durationMs: z.number().int().min(1000).max(120_000).optional(),
+  hidden: z.boolean().optional(),
+  themeOverride: SlideThemeOverrideSchema.optional(),
 });
 export type Slide = z.infer<typeof SlideSchema>;
 
