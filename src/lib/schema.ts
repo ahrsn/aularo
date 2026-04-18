@@ -69,6 +69,11 @@ export const DisplaySchema = z.object({
   pairedAt: z.number().nullable().default(null),
   lastHeartbeat: z.number().nullable().default(null),
   browserInfo: z.string().nullable().default(null),
+  /**
+   * Rolling 7-day heartbeat histogram. Keys: "YYYY-MM-DDTHH" (UTC hour).
+   * Values: heartbeat count in that hour. Pruned on write.
+   */
+  uptimeByHour: z.record(z.string(), z.number()).optional(),
 });
 export type Display = z.infer<typeof DisplaySchema>;
 
@@ -166,6 +171,7 @@ export const AutomationSchema = z.object({
   triggerLabel: z.string(), // human-facing
   when: z.string(), // free-form "Daily · 07:30"
   action: z.string(), // human-facing description
+  icon: z.string().default("lightning"), // Phosphor icon name
   on: z.boolean().default(true),
   createdAt: z.number().default(() => Date.now()),
 });
@@ -187,6 +193,9 @@ export const MediaAssetSchema = z.object({
   sourceRefId: z.string().nullable().default(null),
   uploadedBy: z.string().nullable().default(null),
   status: z.enum(["pending", "ready", "error"]).default("pending"),
+  // null = Unassigned; "brand" sentinel = workspace-wide Brand assets bucket;
+  // any other value = EventDoc.id this asset is scoped to.
+  eventId: z.string().nullable().default(null),
   createdAt: z.number().default(() => Date.now()),
 });
 export type MediaAsset = z.infer<typeof MediaAssetSchema>;
