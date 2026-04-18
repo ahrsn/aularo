@@ -409,97 +409,295 @@ function NowStrip({
   shows: Slideshow[];
   assignments: Map<string, Display[]>;
 }) {
+  const displayCount = new Set(
+    shows.flatMap((s) => assignments.get(s.id)?.map((d) => d.id) ?? []),
+  ).size;
+  const visible = shows.slice(0, 4);
+  const totalSlides = shows.reduce((n, s) => n + (s.slides ?? []).length, 0);
+
   return (
-    <div className="overflow-hidden rounded-[4px] border border-line bg-surface">
-      <div className="flex items-center justify-between border-b border-line px-5 py-[14px]">
-        <div className="flex items-center gap-[10px]">
-          <span
-            className="rounded-full"
-            style={{ width: 7, height: 7, background: "#3B5A41" }}
-          />
-          <div
-            className="font-serif text-ink"
-            style={{
-              fontSize: 17,
-              fontWeight: 500,
-              letterSpacing: "-0.018em",
-              fontVariationSettings: "'opsz' 48",
-            }}
-          >
-            Playing now
+    <section className="flex flex-col gap-[14px]">
+      {/* Editorial header — sits on paper without a container frame */}
+      <header className="flex items-end justify-between gap-6">
+        <div className="flex min-w-0 flex-col gap-[6px]">
+          <div className="flex items-center gap-[8px]">
+            <span
+              className="rounded-full"
+              style={{
+                width: 5,
+                height: 5,
+                background: "var(--success)",
+              }}
+              aria-hidden
+            />
+            <span
+              className="font-mono uppercase"
+              style={{
+                fontSize: 10,
+                letterSpacing: "0.14em",
+                color: "var(--moss)",
+              }}
+            >
+              On view · Live
+            </span>
           </div>
-          <div className="text-[12.5px] tracking-[-0.005em] text-muted">
-            {shows.length} slideshow{shows.length === 1 ? "" : "s"} ·{" "}
-            {new Set(
-              shows.flatMap((s) => assignments.get(s.id)?.map((d) => d.id) ?? []),
-            ).size}{" "}
-            display{shows.length === 1 ? "" : "s"}
+          <div className="flex items-baseline gap-[10px]">
+            <h2
+              className="font-serif text-ink"
+              style={{
+                fontSize: 22,
+                fontWeight: 500,
+                letterSpacing: "-0.02em",
+                fontVariationSettings: "'opsz' 48",
+                lineHeight: 1.1,
+              }}
+            >
+              Now showing
+            </h2>
+            <span
+              className="font-serif italic"
+              style={{
+                fontSize: 14,
+                color: "var(--muted)",
+                letterSpacing: "-0.01em",
+                fontVariationSettings: "'opsz' 18",
+              }}
+            >
+              across the walls
+            </span>
           </div>
         </div>
-        <Link
-          href="/app/displays"
-          className="text-[12.5px] tracking-[-0.005em] text-ink underline underline-offset-[3px]"
-        >
-          View all displays
-        </Link>
-      </div>
+
+        <div className="hidden items-center gap-[18px] md:flex">
+          <Stat label="Programs" value={shows.length} />
+          <span
+            aria-hidden
+            style={{ width: 1, height: 24, background: "var(--line)" }}
+          />
+          <Stat label="Screens" value={displayCount} />
+          <span
+            aria-hidden
+            style={{ width: 1, height: 24, background: "var(--line)" }}
+          />
+          <Stat label="Slides" value={totalSlides} />
+        </div>
+      </header>
+
+      {/* Elevated program cards — each is its own raised tile */}
       <div
-        className="grid"
-        style={{ gridTemplateColumns: `repeat(${Math.min(shows.length, 4)}, 1fr)` }}
+        className="grid gap-[14px]"
+        style={{
+          gridTemplateColumns: `repeat(${Math.max(visible.length, 1)}, minmax(0, 1fr))`,
+        }}
       >
-        {shows.slice(0, 4).map((s, i) => {
+        {visible.map((s, i) => {
           const ds = assignments.get(s.id) ?? [];
+          const firstImg = (s.slides ?? [])
+            .map((sl) => (sl.data as { img?: string } | undefined)?.img)
+            .find((u): u is string => typeof u === "string" && u.length > 0);
+          const slideCount = (s.slides ?? []).length;
+          const primaryDisplay = ds[0] ?? null;
+          const extraDisplays = Math.max(0, ds.length - 1);
+          const runtime = Math.round(
+            ((s.duration ?? 6500) * slideCount) / 1000,
+          );
+
           return (
             <Link
               key={s.id}
               href={`/app/library/${s.id}`}
-              className="flex items-center gap-[14px] px-5 py-[14px]"
+              className="group relative flex flex-col gap-[12px] overflow-hidden rounded-[5px] border border-line bg-surface transition-[transform,box-shadow,border-color] duration-quiet ease-quiet hover:-translate-y-[1px] hover:border-[var(--line-strong)]"
               style={{
-                borderRight: i < Math.min(shows.length, 4) - 1 ? "1px solid var(--line)" : "none",
+                padding: "16px 18px 18px",
                 textDecoration: "none",
                 color: "inherit",
+                boxShadow:
+                  "0 1px 0 rgba(14,20,16,0.025), 0 10px 24px -16px rgba(14,20,16,0.14)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 1px 0 rgba(14,20,16,0.04), 0 18px 38px -20px rgba(14,20,16,0.24)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 1px 0 rgba(14,20,16,0.025), 0 10px 24px -16px rgba(14,20,16,0.14)";
               }}
             >
-              {(() => {
-                const firstImg = (s.slides ?? [])
-                  .map((sl) => (sl.data as { img?: string } | undefined)?.img)
-                  .find((u): u is string => typeof u === "string" && u.length > 0);
-                return (
-                  <div
-                    className="shrink-0 overflow-hidden rounded-[2px]"
-                    style={{ width: 72, height: 40, background: "#EEE9DB" }}
+              {/* Catalog number + running indicator */}
+              <div className="flex items-center justify-between">
+                <span
+                  className="font-mono"
+                  style={{
+                    fontSize: 9.5,
+                    letterSpacing: "0.14em",
+                    color: "var(--muted-2)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  №{String(i + 1).padStart(2, "0")}
+                </span>
+                {ds.length > 0 && (
+                  <span
+                    className="flex items-center gap-[5px] font-mono uppercase"
+                    style={{
+                      fontSize: 9.5,
+                      letterSpacing: "0.1em",
+                      color: "var(--moss)",
+                    }}
                   >
-                    {firstImg && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={firstImg}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          filter: "saturate(0.85)",
-                        }}
-                      />
-                    )}
+                    <span
+                      className="rounded-full"
+                      style={{
+                        width: 5,
+                        height: 5,
+                        background: "var(--moss)",
+                      }}
+                    />
+                    Running
+                  </span>
+                )}
+              </div>
+
+              {/* Thumbnail — framed like an exhibit photo */}
+              <div
+                className="relative overflow-hidden rounded-[2px]"
+                style={{
+                  aspectRatio: "16 / 10",
+                  background: "var(--surface-sunk)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                {firstImg ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={firstImg}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform duration-settle ease-settle group-hover:scale-[1.025]"
+                    style={{ filter: "saturate(0.9) contrast(1.02)" }}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <Icon
+                      name="image"
+                      size={18}
+                      style={{ color: "var(--muted-2)" }}
+                    />
                   </div>
-                );
-              })()}
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-medium tracking-[-0.008em] text-ink">
+                )}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-[4px] rounded-[1px]"
+                  style={{ border: "1px solid rgba(245,241,232,0.18)" }}
+                />
+              </div>
+
+              {/* Title block — serif-led like a plaque */}
+              <div className="flex min-w-0 flex-col gap-[3px]">
+                <div
+                  className="truncate font-serif text-ink"
+                  style={{
+                    fontSize: 15.5,
+                    fontWeight: 500,
+                    letterSpacing: "-0.018em",
+                    fontVariationSettings: "'opsz' 24",
+                    lineHeight: 1.25,
+                  }}
+                >
                   {s.name}
                 </div>
-                <div className="mt-[1px] flex items-center gap-[4px] truncate text-[11.5px] tracking-[-0.005em] text-muted">
-                  <Icon name="monitor" size={10} style={{ color: "#9AA099" }} />
-                  {ds.map((d) => d.name).join(", ")}
+                <div className="flex min-w-0 items-center gap-[6px] text-[11.5px] tracking-[-0.005em] text-muted">
+                  <Icon
+                    name="monitor"
+                    size={10}
+                    style={{ color: "var(--muted-2)", flexShrink: 0 }}
+                  />
+                  {primaryDisplay ? (
+                    <>
+                      <span className="truncate">{primaryDisplay.name}</span>
+                      {extraDisplays > 0 && (
+                        <span
+                          className="font-mono"
+                          style={{
+                            fontSize: 10,
+                            letterSpacing: "0.04em",
+                            color: "var(--muted-2)",
+                          }}
+                        >
+                          &nbsp;+ {extraDisplays} more
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="font-serif italic text-muted-2">
+                      awaiting a screen
+                    </span>
+                  )}
                 </div>
+              </div>
+
+              {/* Footer rule with program details */}
+              <div
+                className="mt-auto flex items-center justify-between border-t border-line pt-[10px] font-mono uppercase"
+                style={{
+                  fontSize: 9.5,
+                  letterSpacing: "0.08em",
+                  color: "var(--muted)",
+                }}
+              >
+                <span>
+                  {slideCount} slide{slideCount === 1 ? "" : "s"}
+                </span>
+                <span className="flex items-center gap-[4px]">
+                  <Icon
+                    name="clock"
+                    size={9}
+                    style={{ color: "var(--muted-2)" }}
+                  />
+                  {formatRuntime(runtime)}
+                </span>
               </div>
             </Link>
           );
         })}
       </div>
+    </section>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex flex-col items-end leading-none">
+      <span
+        className="font-serif text-ink"
+        style={{
+          fontSize: 20,
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          fontVariationSettings: "'opsz' 32",
+        }}
+      >
+        {String(value).padStart(2, "0")}
+      </span>
+      <span
+        className="mt-[3px] font-mono uppercase"
+        style={{
+          fontSize: 9,
+          letterSpacing: "0.12em",
+          color: "var(--muted-2)",
+        }}
+      >
+        {label}
+      </span>
     </div>
   );
+}
+
+function formatRuntime(seconds: number) {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (s === 0) return `${m}m`;
+  return `${m}m ${s}s`;
 }
 
 function SlideshowRow({

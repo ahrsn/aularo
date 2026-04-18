@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -535,6 +535,8 @@ export function MediaClient({
       {previewAsset && (
         <PreviewLightbox
           asset={previewAsset}
+          siblings={filtered}
+          onNavigate={(id) => setPreviewId(id)}
           event={
             previewAsset.eventId && previewAsset.eventId !== "brand"
               ? events.find((e) => e.id === previewAsset.eventId) ?? null
@@ -1362,17 +1364,48 @@ function AssetTile({
 
 function PreviewLightbox({
   asset,
+  siblings,
+  onNavigate,
   event,
   scopeLabel,
   onClose,
 }: {
   asset: MediaAsset;
+  siblings: MediaAsset[];
+  onNavigate: (id: string) => void;
   event: EventDoc | null;
   scopeLabel: string;
   onClose: () => void;
 }) {
   void event;
   const kind = typeOf(asset.mime);
+  const index = siblings.findIndex((a) => a.id === asset.id);
+  const total = siblings.length;
+  const hasPrev = index > 0;
+  const hasNext = index >= 0 && index < total - 1;
+
+  const goPrev = useCallback(() => {
+    if (hasPrev) onNavigate(siblings[index - 1]!.id);
+  }, [hasPrev, onNavigate, siblings, index]);
+
+  const goNext = useCallback(() => {
+    if (hasNext) onNavigate(siblings[index + 1]!.id);
+  }, [hasNext, onNavigate, siblings, index]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goNext();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goPrev, goNext]);
+
   return (
     <div
       className="fixed inset-0 z-[120] flex"
@@ -1387,41 +1420,130 @@ function PreviewLightbox({
           type="button"
           onClick={onClose}
           aria-label="Close preview"
-          className="absolute right-4 top-4 flex h-9 w-9 cursor-pointer items-center justify-center rounded-[4px] text-paper hover:bg-[rgba(245,241,232,0.08)]"
+          className="absolute right-4 top-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-[4px] text-paper hover:bg-[rgba(245,241,232,0.08)]"
         >
           <Icon name="x" size={18} />
         </button>
 
         <div
-          className="flex flex-1 items-center justify-center overflow-hidden rounded-[6px]"
+          className="relative flex flex-1 flex-col overflow-hidden rounded-[6px]"
           style={{ background: "#0E1410" }}
         >
-          {kind === "image" && asset.publicUrl ? (
-            <img
-              src={asset.publicUrl}
-              alt={asset.name}
-              className="max-h-[86vh] max-w-full object-contain"
-            />
-          ) : kind === "video" && asset.publicUrl ? (
-            <video
-              src={asset.publicUrl}
-              controls
-              autoPlay
-              className="max-h-[86vh] max-w-full"
-            />
-          ) : kind === "pdf" && asset.publicUrl ? (
-            <iframe
-              src={asset.publicUrl}
-              title={asset.name}
-              className="h-[86vh] w-full"
-              style={{ background: "#F5F1E8" }}
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-3 p-10 text-paper">
-              <Icon name="file" size={40} />
-              <div className="text-[13px] opacity-70">No preview available</div>
+          {total > 1 && (
+            <div
+              className="flex shrink-0 items-center justify-between border-b px-4"
+              style={{
+                height: 36,
+                background: "rgba(14,20,16,0.6)",
+                borderColor: "rgba(245,241,232,0.08)",
+              }}
+            >
+              <div
+                className="font-mono uppercase"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: "0.1em",
+                  color: "rgba(245,241,232,0.85)",
+                }}
+              >
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <span style={{ opacity: 0.4 }}> of </span>
+                <span>{String(total).padStart(2, "0")}</span>
+              </div>
+              <div
+                className="flex items-center gap-[4px]"
+                aria-hidden
+                style={{ maxWidth: "50%" }}
+              >
+                {siblings.map((s, i) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => onNavigate(s.id)}
+                    aria-label={`Jump to ${s.name}`}
+                    className="cursor-pointer transition-[background,width] duration-quiet ease-quiet"
+                    style={{
+                      height: 2,
+                      width: i === index ? 18 : 8,
+                      background:
+                        i === index
+                          ? "rgba(245,241,232,0.9)"
+                          : "rgba(245,241,232,0.25)",
+                      border: "none",
+                      borderRadius: 1,
+                      padding: 0,
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           )}
+          <div className="relative flex flex-1 items-center justify-center overflow-hidden">
+          <div
+            key={asset.id}
+            className="animate-fade-up flex h-full w-full items-center justify-center"
+          >
+            {kind === "image" && asset.publicUrl ? (
+              <img
+                src={asset.publicUrl}
+                alt={asset.name}
+                className="max-h-[86vh] max-w-full object-contain"
+              />
+            ) : kind === "video" && asset.publicUrl ? (
+              <video
+                src={asset.publicUrl}
+                controls
+                autoPlay
+                className="max-h-[86vh] max-w-full"
+              />
+            ) : kind === "pdf" && asset.publicUrl ? (
+              <iframe
+                src={asset.publicUrl}
+                title={asset.name}
+                className="h-[86vh] w-full"
+                style={{ background: "#F5F1E8" }}
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-3 p-10 text-paper">
+                <Icon name="file" size={40} />
+                <div className="text-[13px] opacity-70">No preview available</div>
+              </div>
+            )}
+          </div>
+
+          {total > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={goPrev}
+                disabled={!hasPrev}
+                aria-label="Previous asset"
+                className="group absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border text-paper transition-[background,border-color,opacity,transform] duration-quiet ease-quiet hover:scale-[1.04] hover:border-[rgba(245,241,232,0.3)] hover:bg-[rgba(245,241,232,0.1)] disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:scale-100"
+                style={{
+                  background: "rgba(14,20,16,0.55)",
+                  borderColor: "rgba(245,241,232,0.15)",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                <Icon name="caret-left" size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={!hasNext}
+                aria-label="Next asset"
+                className="group absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border text-paper transition-[background,border-color,opacity,transform] duration-quiet ease-quiet hover:scale-[1.04] hover:border-[rgba(245,241,232,0.3)] hover:bg-[rgba(245,241,232,0.1)] disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:scale-100"
+                style={{
+                  background: "rgba(14,20,16,0.55)",
+                  borderColor: "rgba(245,241,232,0.15)",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                <Icon name="caret-right" size={18} />
+              </button>
+            </>
+          )}
+          </div>
         </div>
 
         <aside
