@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { randomBytes, randomUUID } from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
-import { requireActiveWorkspace, workspaceRef } from "./workspace";
+import { getWorkspaceBySlug, requireActiveWorkspace, workspaceRef } from "./workspace";
 import { requireUser } from "./auth-session";
 import { adminAuth, adminDb } from "./firebase-admin";
 import { createSignedUploadUrl, r2PublicUrl } from "./r2";
 import { PRICE_IDS, appBaseUrl, stripe, type StripePlan } from "./stripe";
 import {
+  ShortCodeSchema,
   UseCaseSchema,
   WorkspacePlanSchema,
   WorkspaceSlugSchema,
@@ -346,6 +347,276 @@ function makeCode() {
   let out = "";
   for (let i = 0; i < 6; i++) out += alphabet[buf[i] % alphabet.length];
   return out;
+}
+
+function makeShortCode(length = 5) {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const buf = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) out += alphabet[buf[i] % alphabet.length];
+  return out;
+}
+
+// ── Pre-assigned display short codes ────────────────────────────────────
+
+const createPreassignedSchema = z.object({
+  name: z.string().min(1).max(80),
+  shortCode: ShortCodeSchema.optional(),
+  room: z.string().max(80).optional(),
+  location: z.string().max(120).optional(),
+  slideshowId: z.string().nullable().optional(),
+});
+
+/**
+ * Create a Display ahead of time with a human-typable short code. The
+ * display sits in `status: "pairing"` until a screen claims it via
+ * /d/{wsSlug}/{code}.
+ */
+export async function createPreassignedDisplay(
+  input: z.infer<typeof createPreassignedSchema>,
+) {
+  const parsed = createPreassignedSchema.parse(input);
+  const { workspaceId, role } = await requireActiveWorkspace();
+  if (role === "viewer") throw new Error("ONLY_EDITORS");
+
+  // Enforce display limit.
+  const wsSnap = await workspaceRef(workspaceId).get();
+  const displayLimit = (wsSnap.get("displayLimit") as number | undefined) ?? 1;
+  const slug = (wsSnap.get("slug") as string | null) ?? null;
+  if (!slug) throw new Error("WORKSPACE_SLUG_REQUIRED");
+
+  const currentCount = (
+    await workspaceRef(workspaceId).collection("displays").count().get()
+  ).data().count;
+  if (currentCount >= displayLimit) {
+    const err = new Error("DISPLAY_LIMIT_REACHED");
+    (err as Error & { limit?: number; current?: number }).limit = displayLimit;
+    (err as Error & { limit?: number; current?: number }).current = currentCount;
+    throw err;
+  }
+
+  const db = adminDb();
+  const wsRef = workspaceRef(workspaceId);
+
+  // Pick a code. If admin supplied one, try it; if it collides, bubble up
+  // so the UI can show the error. If omitted, retry a few times on collision.
+  const MAX_TRIES = 8;
+  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+    const code = (parsed.shortCode ?? makeShortCode(5)).toUpperCase();
+    const reservationRef = wsRef.collection("displayCodes").doc(code);
+    const displayRef = wsRef.collection("displays").doc();
+
+    try {
+      const created = await db.runTransaction(async (tx) => {
+        const existing = await tx.get(reservationRef);
+        if (existing.exists) return { collision: true as const };
+
+        const now = Date.now();
+        tx.set(displayRef, {
+          id: displayRef.id,
+          name: parsed.name,
+          room: parsed.room ?? null,
+          location: parsed.location ?? null,
+          status: "pairing",
+          currentSlideshowId: parsed.slideshowId ?? null,
+          screenId: null,
+          shortCode: code,
+          pairedAt: null,
+          lastHeartbeat: null,
+          browserInfo: null,
+        });
+        tx.set(reservationRef, {
+          code,
+          displayId: displayRef.id,
+          workspaceId,
+          createdAt: now,
+        });
+        return { collision: false as const, displayId: displayRef.id, code };
+      });
+
+      if (created.collision) {
+        if (parsed.shortCode) throw new Error("CODE_TAKEN");
+        continue; // retry with new auto-generated code
+      }
+
+      revalidatePath("/app/displays");
+      return {
+        displayId: created.displayId,
+        shortCode: created.code,
+        workspaceSlug: slug,
+      };
+    } catch (e) {
+      if (e instanceof Error && e.message === "CODE_TAKEN") throw e;
+      throw e;
+    }
+  }
+  throw new Error("CODE_GENERATION_EXHAUSTED");
+}
+
+const rotateShortCodeSchema = z.object({
+  displayId: z.string(),
+  newShortCode: ShortCodeSchema.optional(),
+});
+
+/**
+ * Rotate a display's short code. Old code becomes invalid; display stays
+ * bound to whatever screen is currently paired (they hold displayId in
+ * localStorage, not the code).
+ */
+export async function rotateDisplayShortCode(
+  input: z.infer<typeof rotateShortCodeSchema>,
+) {
+  const { displayId, newShortCode } = rotateShortCodeSchema.parse(input);
+  const { workspaceId, role } = await requireActiveWorkspace();
+  if (role === "viewer") throw new Error("ONLY_EDITORS");
+
+  const db = adminDb();
+  const wsRef = workspaceRef(workspaceId);
+  const displayRef = wsRef.collection("displays").doc(displayId);
+
+  const MAX_TRIES = 8;
+  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+    const code = (newShortCode ?? makeShortCode(5)).toUpperCase();
+    const newRef = wsRef.collection("displayCodes").doc(code);
+
+    try {
+      const result = await db.runTransaction(async (tx) => {
+        const displaySnap = await tx.get(displayRef);
+        if (!displaySnap.exists) throw new Error("DISPLAY_NOT_FOUND");
+        const oldCode = (displaySnap.get("shortCode") as string | null) ?? null;
+
+        const newSnap = await tx.get(newRef);
+        if (newSnap.exists && oldCode !== code) return { collision: true as const };
+
+        if (oldCode && oldCode !== code) {
+          tx.delete(wsRef.collection("displayCodes").doc(oldCode));
+        }
+        tx.set(newRef, {
+          code,
+          displayId,
+          workspaceId,
+          createdAt: Date.now(),
+        });
+        tx.update(displayRef, { shortCode: code });
+        return { collision: false as const, code };
+      });
+
+      if (result.collision) {
+        if (newShortCode) throw new Error("CODE_TAKEN");
+        continue;
+      }
+
+      revalidatePath("/app/displays");
+      return { shortCode: result.code };
+    } catch (e) {
+      if (e instanceof Error && e.message === "CODE_TAKEN") throw e;
+      throw e;
+    }
+  }
+  throw new Error("CODE_GENERATION_EXHAUSTED");
+}
+
+/** Remove a display's short code. Paired screen keeps running. */
+export async function clearDisplayShortCode(displayId: string) {
+  const { workspaceId, role } = await requireActiveWorkspace();
+  if (role === "viewer") throw new Error("ONLY_EDITORS");
+
+  const db = adminDb();
+  const wsRef = workspaceRef(workspaceId);
+  const displayRef = wsRef.collection("displays").doc(displayId);
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(displayRef);
+    if (!snap.exists) throw new Error("DISPLAY_NOT_FOUND");
+    const oldCode = (snap.get("shortCode") as string | null) ?? null;
+    if (oldCode) tx.delete(wsRef.collection("displayCodes").doc(oldCode));
+    tx.update(displayRef, { shortCode: null });
+  });
+
+  revalidatePath("/app/displays");
+}
+
+const checkShortCodeSchema = z.object({
+  shortCode: z.string().min(1).max(12),
+});
+
+/** Read: is this short code available in the active workspace? */
+export async function checkShortCodeAvailable(
+  input: z.infer<typeof checkShortCodeSchema>,
+) {
+  const { shortCode } = checkShortCodeSchema.parse(input);
+  const parsed = ShortCodeSchema.safeParse(shortCode.toUpperCase());
+  if (!parsed.success) {
+    return { available: false, reason: "invalid" as const };
+  }
+  const { workspaceId } = await requireActiveWorkspace();
+  const snap = await workspaceRef(workspaceId)
+    .collection("displayCodes")
+    .doc(parsed.data)
+    .get();
+  return { available: !snap.exists, code: parsed.data };
+}
+
+const ACTIVE_SCREEN_WINDOW_MS = 60 * 1000;
+
+const claimByShortCodeSchema = z.object({
+  wsSlug: WorkspaceSlugSchema,
+  code: ShortCodeSchema,
+  screenId: z.string().min(8).max(128),
+  browserInfo: z.string().max(256).optional(),
+});
+
+/**
+ * Public (no auth) — bind a kiosk's screenId to a pre-created Display by
+ * its short code. Rejects if another screen is actively heartbeating
+ * against the same Display.
+ */
+export async function claimDisplayByShortCode(
+  input: z.infer<typeof claimByShortCodeSchema>,
+) {
+  const { wsSlug, code, screenId, browserInfo } =
+    claimByShortCodeSchema.parse(input);
+
+  const ws = await getWorkspaceBySlug(wsSlug);
+  if (!ws) throw new Error("WORKSPACE_NOT_FOUND");
+
+  const wsRef = workspaceRef(ws.workspaceId);
+  const reservationRef = wsRef.collection("displayCodes").doc(code);
+
+  return await adminDb().runTransaction(async (tx) => {
+    const resSnap = await tx.get(reservationRef);
+    if (!resSnap.exists) throw new Error("CODE_NOT_FOUND");
+    const displayId = resSnap.get("displayId") as string;
+
+    const displayRef = wsRef.collection("displays").doc(displayId);
+    const displaySnap = await tx.get(displayRef);
+    if (!displaySnap.exists) throw new Error("DISPLAY_MISSING");
+
+    const existingScreenId =
+      (displaySnap.get("screenId") as string | null) ?? null;
+    const lastHeartbeat =
+      (displaySnap.get("lastHeartbeat") as number | null) ?? null;
+    const now = Date.now();
+
+    if (
+      existingScreenId &&
+      existingScreenId !== screenId &&
+      lastHeartbeat &&
+      now - lastHeartbeat < ACTIVE_SCREEN_WINDOW_MS
+    ) {
+      throw new Error("DISPLAY_IN_USE");
+    }
+
+    tx.update(displayRef, {
+      screenId,
+      status: "online",
+      pairedAt: now,
+      lastHeartbeat: now,
+      browserInfo: browserInfo ?? null,
+    });
+
+    return { workspaceId: ws.workspaceId, displayId };
+  });
 }
 
 // ── Display heartbeat ───────────────────────────────────────────────────
@@ -1206,7 +1477,9 @@ const integrationSchema = z.object({
     "slack",
     "unsplash",
     "google-calendar",
-    "figma",
+    "canva",
+    "n8n",
+    "zapier",
   ]),
 });
 
@@ -1575,4 +1848,13 @@ export async function deleteWorkspace(input: z.infer<typeof deleteSchema>) {
 
   await clearSessionCookie();
   redirect("/login");
+}
+
+export async function acknowledgeChangelog(version: string) {
+  const parsed = z.string().min(1).max(64).parse(version);
+  const user = await requireUser();
+  await adminDb()
+    .collection("users")
+    .doc(user.uid)
+    .update({ lastSeenChangelogVersion: parsed });
 }

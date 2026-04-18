@@ -58,6 +58,12 @@ export const DisplayStatusSchema = z.enum([
 ]);
 export type DisplayStatus = z.infer<typeof DisplayStatusSchema>;
 
+export const ShortCodeSchema = z
+  .string()
+  .regex(/^[A-Z0-9]{4,12}$/, {
+    message: "4-12 chars, uppercase letters and numbers only",
+  });
+
 export const DisplaySchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -65,7 +71,8 @@ export const DisplaySchema = z.object({
   location: z.string().nullable().default(null),
   status: DisplayStatusSchema.default("offline"),
   currentSlideshowId: z.string().nullable().default(null),
-  screenId: z.string(),
+  screenId: z.string().nullable().default(null),
+  shortCode: z.string().nullable().default(null),
   pairedAt: z.number().nullable().default(null),
   lastHeartbeat: z.number().nullable().default(null),
   browserInfo: z.string().nullable().default(null),
@@ -135,6 +142,7 @@ export const UserProfileSchema = z.object({
   activeWorkspaceId: z.string(),
   onboardingCompletedAt: z.number().nullable().default(null),
   source: z.string().nullable().default(null),
+  lastSeenChangelogVersion: z.string().nullable().default(null),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
@@ -218,7 +226,9 @@ export const IntegrationProviderSchema = z.enum([
   "slack",
   "unsplash",
   "google-calendar",
-  "figma",
+  "canva",
+  "n8n",
+  "zapier",
 ]);
 export type IntegrationProvider = z.infer<typeof IntegrationProviderSchema>;
 
