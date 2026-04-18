@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { newsreader, geist, jetbrains } from "@/lib/fonts";
+import { ToastProvider } from "@/components/ui/toast";
 import "./globals.css";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://clarra.show";
@@ -60,7 +61,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-paper text-ink antialiased">
-        {children}
+        <ToastProvider>{children}</ToastProvider>
         <Analytics />
       </body>
     </html>
