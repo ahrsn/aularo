@@ -12,6 +12,7 @@ import {
   revokeInvite,
   updateMemberRole,
 } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 import type { Invite } from "@/lib/schema";
 import type { MemberWithProfile } from "@/lib/slideshow-data";
 
@@ -29,21 +30,21 @@ export function TeamSection({
   initialInvites: Invite[];
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "viewer">("editor");
-  const [err, setErr] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
 
   function onInvite(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null);
     startTransition(async () => {
       try {
         await inviteMember({ email, role });
         setEmail("");
+        toast.success("Invite sent");
         router.refresh();
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Invite failed");
+        toast.error(e, "Couldn't send invite.");
       }
     });
   }
@@ -100,12 +101,6 @@ export function TeamSection({
             Send invite
           </Button>
         </form>
-      )}
-
-      {err && (
-        <div className="rounded-[4px] bg-[#F3E4E0] p-3 text-[12.5px] text-[#8B3A2F]">
-          {err}
-        </div>
       )}
 
       <div className="overflow-hidden rounded-[4px] border border-line bg-surface">
@@ -178,6 +173,7 @@ function MemberRow({
   isLast: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [busy, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const initials =
@@ -192,16 +188,26 @@ function MemberRow({
   function onRoleChange(role: "owner" | "editor" | "viewer") {
     if (role === m.role) return;
     startTransition(async () => {
-      await updateMemberRole({ uid: m.uid, role });
-      router.refresh();
+      try {
+        await updateMemberRole({ uid: m.uid, role });
+        toast.success("Role updated");
+        router.refresh();
+      } catch (e) {
+        toast.error(e, "Couldn't update role.");
+      }
     });
   }
 
   function doRemove() {
     setConfirmOpen(false);
     startTransition(async () => {
-      await removeMember(m.uid);
-      router.refresh();
+      try {
+        await removeMember(m.uid);
+        toast.success("Member removed");
+        router.refresh();
+      } catch (e) {
+        toast.error(e, "Couldn't remove member.");
+      }
     });
   }
 
@@ -292,11 +298,17 @@ function InviteRow({
   isLast: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [busy, startTransition] = useTransition();
   function onRevoke() {
     startTransition(async () => {
-      await revokeInvite(invite.token);
-      router.refresh();
+      try {
+        await revokeInvite(invite.token);
+        toast.success("Invite revoked");
+        router.refresh();
+      } catch (e) {
+        toast.error(e, "Couldn't revoke invite.");
+      }
     });
   }
   return (

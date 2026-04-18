@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/alert-dialog";
 import { deleteWorkspace, transferOwnership } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 import type { MemberWithProfile } from "@/lib/slideshow-data";
 
 export function DangerZone({
@@ -49,11 +50,9 @@ function TransferBlock({
   otherMembers: MemberWithProfile[];
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [toUid, setToUid] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [msg, setMsg] = useState<null | { kind: "ok" | "err"; text: string }>(
-    null,
-  );
   const [busy, startTransition] = useTransition();
 
   const target = otherMembers.find((m) => m.uid === toUid);
@@ -66,17 +65,13 @@ function TransferBlock({
 
   function doTransfer() {
     setConfirmOpen(false);
-    setMsg(null);
     startTransition(async () => {
       try {
         await transferOwnership({ toUid });
-        setMsg({ kind: "ok", text: "Ownership transferred" });
+        toast.success("Ownership transferred");
         router.refresh();
       } catch (err) {
-        setMsg({
-          kind: "err",
-          text: err instanceof Error ? err.message : "Failed",
-        });
+        toast.error(err, "Couldn't transfer ownership.");
       }
     });
   }
@@ -107,14 +102,6 @@ function TransferBlock({
       </div>
       {otherMembers.length > 0 && (
         <form onSubmit={onSubmit} className="flex items-center gap-2">
-          {msg && (
-            <span
-              className="text-[12px] tracking-[-0.005em]"
-              style={{ color: msg.kind === "ok" ? "#3B5A41" : "#8B3A2F" }}
-            >
-              {msg.text}
-            </span>
-          )}
           <select
             value={toUid}
             onChange={(e) => setToUid(e.target.value)}
@@ -144,21 +131,21 @@ function TransferBlock({
 }
 
 function DeleteBlock({ workspaceName }: { workspaceName: string }) {
+  const toast = useToast();
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState("");
-  const [err, setErr] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
 
   const canDelete = confirm.trim() === workspaceName;
 
   function onDelete() {
     if (!canDelete) return;
-    setErr(null);
     startTransition(async () => {
       try {
         await deleteWorkspace({ confirmName: confirm });
+        toast.success("Workspace deleted");
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Failed to delete");
+        toast.error(e, "Couldn't delete workspace.");
       }
     });
   }
@@ -230,17 +217,11 @@ function DeleteBlock({ workspaceName }: { workspaceName: string }) {
               onClick={() => {
                 setOpen(false);
                 setConfirm("");
-                setErr(null);
               }}
             >
               Cancel
             </Button>
           </div>
-          {err && (
-            <div className="mt-2 text-[12px] tracking-[-0.005em] text-[#8B3A2F]">
-              {err}
-            </div>
-          )}
         </div>
       )}
     </div>

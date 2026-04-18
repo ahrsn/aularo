@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { renameWorkspace } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 
 export function WorkspaceSettingsForm({
   initialName,
@@ -14,23 +15,20 @@ export function WorkspaceSettingsForm({
   canEdit: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [name, setName] = useState(initialName);
-  const [saved, setSaved] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (name === initialName || !canEdit) return;
-    setErr(null);
     startTransition(async () => {
       try {
         await renameWorkspace({ name });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        toast.success("Workspace renamed");
         router.refresh();
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Failed to save");
+        toast.error(e, "Couldn't save.");
       }
     });
   }
@@ -53,15 +51,7 @@ export function WorkspaceSettingsForm({
           Only the workspace owner can rename.
         </div>
       )}
-      {err && (
-        <div className="rounded-[3px] bg-[#F3E4E0] p-2 text-[12.5px] text-[#8B3A2F]">
-          {err}
-        </div>
-      )}
-      <div className="flex items-center justify-between">
-        <div className="text-[12px] tracking-[-0.005em] text-muted">
-          {saved ? "Saved" : ""}
-        </div>
+      <div className="flex items-center justify-end">
         <Button
           type="submit"
           variant="primary"

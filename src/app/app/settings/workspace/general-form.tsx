@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateWorkspaceIdentity } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 
 const TIMEZONES = [
   "America/Chicago",
@@ -45,12 +46,11 @@ export function GeneralForm({
   initialTimezone: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [name, setName] = useState(initialName);
   const [slug, setSlug] = useState(initialSlug ?? "");
   const [timezone, setTimezone] = useState(initialTimezone);
-  const [msg, setMsg] = useState<null | { kind: "ok" | "err"; text: string }>(
-    null,
-  );
+  const [slugTaken, setSlugTaken] = useState(false);
   const [busy, startTransition] = useTransition();
 
   const slugInvalid = slug !== "" && !SLUG_PATTERN.test(slug);
@@ -62,7 +62,7 @@ export function GeneralForm({
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canEdit || !dirty || slugInvalid) return;
-    setMsg(null);
+    setSlugTaken(false);
     startTransition(async () => {
       try {
         const res = await updateWorkspaceIdentity({
@@ -71,17 +71,13 @@ export function GeneralForm({
           timezone,
         });
         if ("error" in res && res.error === "slug_taken") {
-          setMsg({ kind: "err", text: "That URL is already taken." });
+          setSlugTaken(true);
           return;
         }
-        setMsg({ kind: "ok", text: "Saved" });
-        setTimeout(() => setMsg(null), 2000);
+        toast.success("Settings saved");
         router.refresh();
       } catch (e) {
-        setMsg({
-          kind: "err",
-          text: e instanceof Error ? e.message : "Failed to save",
-        });
+        toast.error(e, "Couldn't save.");
       }
     });
   }
@@ -128,6 +124,11 @@ export function GeneralForm({
             3-32 characters, lowercase letters, numbers, and hyphens.
           </div>
         )}
+        {slugTaken && (
+          <div className="mt-1.5 text-[12px] tracking-[-0.005em] text-[#8B3A2F]">
+            That URL is already taken.
+          </div>
+        )}
       </Field>
 
       <Field label="Time zone" hint="Used for scheduling and display clocks">
@@ -158,16 +159,6 @@ export function GeneralForm({
       )}
 
       <div className="flex items-center justify-end gap-3 pt-4">
-        {msg && (
-          <span
-            className="text-[12.5px] tracking-[-0.005em]"
-            style={{
-              color: msg.kind === "ok" ? "#3B5A41" : "#8B3A2F",
-            }}
-          >
-            {msg.text}
-          </span>
-        )}
         <Button
           type="submit"
           variant="primary"

@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateWorkspaceBrand } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
@@ -16,18 +17,15 @@ export function BrandColorsInline({
   initialBackground: string;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [accent, setAccent] = useState(initialAccent);
   const [background, setBackground] = useState(initialBackground);
-  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">(
-    "idle",
-  );
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, startTransition] = useTransition();
 
   function schedule(nextAccent: string, nextBackground: string) {
     if (timer.current) clearTimeout(timer.current);
     if (!HEX.test(nextAccent) || !HEX.test(nextBackground)) return;
-    setState("saving");
     timer.current = setTimeout(() => {
       startTransition(async () => {
         try {
@@ -35,15 +33,10 @@ export function BrandColorsInline({
             accent: nextAccent,
             background: nextBackground,
           });
-          setState("saved");
-          setTimeout(
-            () =>
-              setState((s) => (s === "saved" ? "idle" : s)),
-            1500,
-          );
+          toast.success("Colors saved");
           router.refresh();
-        } catch {
-          setState("error");
+        } catch (e) {
+          toast.error(e, "Couldn't save colors.");
         }
       });
     }, 450);
@@ -69,21 +62,6 @@ export function BrandColorsInline({
           schedule(accent, next);
         }}
       />
-      {state === "saving" && (
-        <span className="text-[11px] tracking-[-0.005em] text-muted-2">
-          Saving…
-        </span>
-      )}
-      {state === "saved" && (
-        <span className="text-[11px] tracking-[-0.005em] text-moss">
-          Saved
-        </span>
-      )}
-      {state === "error" && (
-        <span className="text-[11px] tracking-[-0.005em] text-[#8B3A2F]">
-          Save failed
-        </span>
-      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   createWorkspaceLogoUpload,
   updateWorkspaceBrand,
 } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 
 export function LogoAvatar({
   initialLogoUrl,
@@ -22,18 +23,17 @@ export function LogoAvatar({
   canEdit: boolean;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(initialLogoUrl);
   const [hover, setHover] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   async function onPicked(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !canEdit) return;
-    setErr(null);
     setUploading(true);
     try {
       const { uploadUrl, publicUrl } = await createWorkspaceLogoUpload({
@@ -51,10 +51,11 @@ export function LogoAvatar({
       setLogoUrl(publicUrl);
       startTransition(async () => {
         await updateWorkspaceBrand({ logoUrl: publicUrl });
+        toast.success("Logo updated");
         router.refresh();
       });
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Upload failed");
+      toast.error(e, "Upload failed.");
     } finally {
       setUploading(false);
     }
@@ -66,6 +67,7 @@ export function LogoAvatar({
     setLogoUrl(null);
     startTransition(async () => {
       await updateWorkspaceBrand({ logoUrl: null });
+      toast.success("Logo removed");
       router.refresh();
     });
   }
@@ -161,13 +163,6 @@ export function LogoAvatar({
         </button>
       )}
 
-      {err && (
-        <div
-          className="absolute left-0 top-[calc(100%+6px)] whitespace-nowrap text-[11px] tracking-[-0.005em] text-[#8B3A2F]"
-        >
-          {err}
-        </div>
-      )}
     </div>
   );
 }
