@@ -1,0 +1,19 @@
+{
+  "name": "Clarra",
+  "short_name": "Clarra",
+  "description": "Slideshow software for events, galleries, and kiosks.",
+  "start_url": "/screen",
+  "scope": "/screen",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#0E1410",
+  "theme_color": "#0E1410",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
