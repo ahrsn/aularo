@@ -1,5 +1,5 @@
 {
-  "name": "clarra-scaffold",
+  "name": "clarra",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,9 +9,27 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1032.0",
+    "@aws-sdk/s3-request-presigner": "^3.1032.0",
+    "@hookform/resolvers": "^5.2.2",
+    "@phosphor-icons/react": "^2.1.10",
+    "@types/qrcode": "^1.5.6",
+    "@vercel/analytics": "^2.0.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dropbox": "^10.34.0",
+    "firebase": "^12.12.0",
+    "firebase-admin": "^13.8.0",
+    "googleapis": "^171.4.0",
+    "lucide-react": "^1.8.0",
     "next": "16.2.4",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.72.1",
+    "stripe": "^22.0.2",
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

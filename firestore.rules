@@ -1,0 +1,128 @@
+rules_version = '2';
+
+// Clarra — Firestore security rules
+// Deploy with: firebase deploy --only firestore:rules
+//
+// Access model:
+//   - users/{uid}            : the authed user can read+write their own doc only
+//   - workspaces/{wsId}      : gated by membership in workspaces/{wsId}/members/{uid}
+//   - pairingCodes/{code}    : public write-restricted; anyone can READ a code they
+//                              know (to watch for claims), only server can WRITE
+//   - displays/{displayId}   : inside a workspace — members read; claim happens in
+//                              server actions (bypasses rules via Admin SDK)
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(wsId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/workspaces/$(wsId)/members/$(request.auth.uid));
+    }
+
+    function memberRole(wsId) {
+      return get(/databases/$(database)/documents/workspaces/$(wsId)/members/$(request.auth.uid)).data.role;
+    }
+
+    function isOwner(wsId) {
+      return isMember(wsId) && memberRole(wsId) == 'owner';
+    }
+
+    function canEdit(wsId) {
+      return isMember(wsId) && memberRole(wsId) in ['owner', 'editor'];
+    }
+
+    // ── User profiles ──────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── Pairing codes (top-level, short-lived) ─────────────────────────
+    // Screens read-subscribe to their own code. Writes only from server (Admin
+    // SDK bypasses these rules anyway) — deny client writes.
+    match /pairingCodes/{code} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Workspace slugs (public reverse index for clarra.show/{slug}) ──
+    // Anyone can look up a slug; writes happen only in server actions via
+    // Admin SDK (which bypasses rules).
+    match /workspaceSlugs/{slug} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── Workspaces ─────────────────────────────────────────────────────
+    match /workspaces/{wsId} {
+      allow read: if isMember(wsId);
+      // Only the owner can rename / change billing fields directly.
+      allow update: if isOwner(wsId);
+      // Workspace creation is done server-side during auth bootstrap.
+      allow create, delete: if false;
+
+      // Members subcollection
+      match /members/{uid} {
+        // Members can see the roster; only owners can add/remove.
+        allow read: if isMember(wsId);
+        allow write: if isOwner(wsId);
+      }
+
+      // Slideshows — members always; public-preview slideshows also allow
+      // read-only anon access when publicSlug is set.
+      match /slideshows/{slideshowId} {
+        allow read: if isMember(wsId) ||
+          (resource.data.publicSlug != null &&
+           resource.data.publicSlug is string);
+        allow create, update, delete: if canEdit(wsId);
+      }
+
+      // Displays — screens read via onSnapshot to get assigned slideshow
+      match /displays/{displayId} {
+        allow read: if isMember(wsId);
+        allow create, update, delete: if canEdit(wsId);
+      }
+
+      // Schedule blocks (Phase 2.2)
+      match /schedule/{blockId} {
+        allow read: if isMember(wsId);
+        allow write: if canEdit(wsId);
+      }
+
+      // Automations (Phase 2.2)
+      match /automations/{ruleId} {
+        allow read: if isMember(wsId);
+        allow write: if canEdit(wsId);
+      }
+
+      // Media + folders (Phase 3.1)
+      match /media/{assetId} {
+        allow read: if isMember(wsId);
+        allow write: if canEdit(wsId);
+      }
+      match /mediaFolders/{folderId} {
+        allow read: if isMember(wsId);
+        allow write: if canEdit(wsId);
+      }
+
+      // OAuth tokens (Drive/Dropbox/Stripe) — only owner
+      match /integrations/{provider} {
+        allow read, write: if isOwner(wsId);
+      }
+    }
+
+    // ── QR submissions (Phase 4.3) ─────────────────────────────────────
+    // Anyone with the token link can create a pending submission.
+    // Workspace members moderate via the dashboard.
+    match /qrSubmissions/{submissionId} {
+      allow create: if true;
+      allow read, update, delete: if isSignedIn() &&
+        resource.data.workspaceId != null &&
+        isMember(resource.data.workspaceId);
+    }
+  }
+}
