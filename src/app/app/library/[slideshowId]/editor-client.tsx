@@ -16,6 +16,7 @@ import {
   setSlideshowEvent,
   updateSlideshow,
 } from "@/lib/actions";
+import { useToast } from "@/components/ui/toast";
 import type { Display, EventDoc, Slideshow } from "@/lib/schema";
 
 type Kind = "portrait" | "program" | "quote" | "photo";
@@ -34,6 +35,7 @@ export function SlideshowEditor({
   submissionsPanel?: React.ReactNode;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [busy, startTransition] = useTransition();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -63,21 +65,31 @@ export function SlideshowEditor({
       data.items = [];
     }
     startTransition(async () => {
-      await addSlide({ slideshowId: slideshow.id, kind, data });
-      setTitle("");
-      setBody("");
-      setImg("");
-      setCaption("");
-      setBy("");
-      router.refresh();
+      try {
+        await addSlide({ slideshowId: slideshow.id, kind, data });
+        setTitle("");
+        setBody("");
+        setImg("");
+        setCaption("");
+        setBy("");
+        router.refresh();
+        toast.success("Slide added");
+      } catch (e) {
+        toast.error(e, "Couldn't add slide.");
+      }
     });
   }
 
   function onPublish(displayId: string) {
     startTransition(async () => {
-      await updateSlideshow({ id: slideshow.id, status: "live" });
-      await assignSlideshow({ displayId, slideshowId: slideshow.id });
-      router.refresh();
+      try {
+        await updateSlideshow({ id: slideshow.id, status: "live" });
+        await assignSlideshow({ displayId, slideshowId: slideshow.id });
+        router.refresh();
+        toast.success("Slideshow published");
+      } catch (e) {
+        toast.error(e, "Couldn't publish slideshow.");
+      }
     });
   }
 
@@ -90,8 +102,13 @@ export function SlideshowEditor({
     const slideId = deleteSlideId;
     setDeleteSlideId(null);
     startTransition(async () => {
-      await deleteSlide({ slideshowId: slideshow.id, slideId });
-      router.refresh();
+      try {
+        await deleteSlide({ slideshowId: slideshow.id, slideId });
+        router.refresh();
+        toast.success("Slide deleted");
+      } catch (e) {
+        toast.error(e, "Couldn't delete slide.");
+      }
     });
   }
 
