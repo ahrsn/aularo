@@ -6,7 +6,7 @@ import { Icon } from "./icon";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center gap-[7px] rounded-[4px] font-medium whitespace-nowrap border border-transparent transition-[background,border-color] duration-[120ms] cursor-pointer tracking-[-0.005em] disabled:opacity-60 disabled:cursor-not-allowed",
+  "inline-flex items-center gap-[7px] rounded-[4px] font-medium whitespace-nowrap border border-transparent transition-[background,border-color,color,opacity,transform] duration-quiet ease-quiet cursor-pointer tracking-[-0.005em] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed disabled:active:translate-y-0",
   {
     variants: {
       variant: {
