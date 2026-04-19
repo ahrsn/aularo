@@ -91,7 +91,7 @@ function parseReleaseBlock(block: string): ChangelogRelease | null {
 let cached: ChangelogRelease[] | null = null;
 
 export function getChangelog(): ChangelogRelease[] {
-  if (cached) return cached;
+  if (cached && process.env.NODE_ENV !== "development") return cached;
   const path = join(process.cwd(), "CHANGELOG.md");
   const raw = readFileSync(path, "utf8");
   const withoutComments = raw.replace(/<!--[\s\S]*?-->/g, "");
