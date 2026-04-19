@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { adminDb } from "@/lib/firebase-admin";
+import { enforceIpRateLimit } from "@/lib/rate-limit";
 
 /**
  * GET /api/pair/check?code=ABC123
@@ -11,6 +12,14 @@ export async function GET(req: NextRequest) {
   if (!code || !/^[A-Z0-9]{4,10}$/.test(code)) {
     return NextResponse.json({ error: "bad code" }, { status: 400 });
   }
+  // Rate-limit per IP to deter code enumeration. Legitimate kiosks poll ~60x
+  // per 10-minute code lifetime — 120/min ceiling is well above that.
+  const limited = await enforceIpRateLimit(req, "pair:check", {
+    limit: 120,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   const snap = await adminDb().collection("pairingCodes").doc(code).get();
   if (!snap.exists) {
     return NextResponse.json({ exists: false });
