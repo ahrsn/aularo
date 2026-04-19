@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { claimDisplayByShortCode } from "@/lib/actions";
+import { enforceIpRateLimit } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   wsSlug: z.string().min(3).max(32),
@@ -15,6 +16,12 @@ const bodySchema = z.object({
  * workspace slug + short code.
  */
 export async function POST(req: NextRequest) {
+  const limited = await enforceIpRateLimit(req, "display:claim", {
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   const body = await req.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {

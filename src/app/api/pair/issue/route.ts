@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { issuePairingCode } from "@/lib/actions";
+import { enforceIpRateLimit } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
   screenId: z.string().min(8).max(128),
@@ -11,6 +12,12 @@ const bodySchema = z.object({
  * Public endpoint — a kiosk requests a fresh pairing code for its screenId.
  */
 export async function POST(req: NextRequest) {
+  const limited = await enforceIpRateLimit(req, "pair:issue", {
+    limit: 10,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   const body = await req.json().catch(() => null);
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) {
