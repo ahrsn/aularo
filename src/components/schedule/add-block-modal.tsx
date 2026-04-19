@@ -105,7 +105,7 @@ export function AddBlockModal({
               Schedule
             </div>
             <div className="text-h2 mt-1" style={{ fontSize: 22 }}>
-              Add a block
+              Add a Block
             </div>
           </div>
           <button
@@ -118,7 +118,7 @@ export function AddBlockModal({
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4 p-[22px]">
           <label className="flex flex-col gap-1">
-            <span className="text-label">Block name</span>
+            <span className="text-label">Block Name</span>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}

@@ -35,7 +35,7 @@ export function DangerZone({
           color: "#8B3A2F",
         }}
       >
-        Danger zone
+        Danger Zone
       </div>
 
       <TransferBlock otherMembers={otherMembers} />
@@ -92,7 +92,7 @@ function TransferBlock({
     >
       <div>
         <div className="text-[13px] font-medium tracking-[-0.005em] text-ink">
-          Transfer ownership
+          Transfer Ownership
         </div>
         <div className="mt-0.5 text-[12px] tracking-[-0.005em] text-muted">
           {otherMembers.length === 0
@@ -155,7 +155,7 @@ function DeleteBlock({ workspaceName }: { workspaceName: string }) {
       <div className="flex items-center justify-between gap-4">
         <div>
           <div className="text-[13px] font-medium tracking-[-0.005em] text-ink">
-            Delete workspace
+            Delete Workspace
           </div>
           <div className="mt-0.5 text-[12px] tracking-[-0.005em] text-muted">
             Removes every slideshow, display, schedule entry, and member.
@@ -169,7 +169,7 @@ function DeleteBlock({ workspaceName }: { workspaceName: string }) {
             size="sm"
             onClick={() => setOpen(true)}
           >
-            Delete workspace
+            Delete Workspace
           </Button>
         )}
       </div>

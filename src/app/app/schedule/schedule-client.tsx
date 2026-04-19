@@ -115,7 +115,7 @@ export function ScheduleClient({
       <div className="flex min-w-0 flex-col gap-[22px]">
         <div className="flex flex-wrap items-end justify-between gap-5">
           <div>
-            <Eyebrow>Run of show</Eyebrow>
+            <Eyebrow>Run of Show</Eyebrow>
             <h2
               className="m-0 mt-[6px] font-serif"
               style={{
@@ -147,7 +147,7 @@ export function ScheduleClient({
               icon="plus"
               onClick={() => setAddOpen(true)}
             >
-              Add block
+              Add Block
             </Button>
           </div>
         </div>
@@ -172,7 +172,7 @@ export function ScheduleClient({
                 borderColor: "rgba(25,35,26,0.12)",
               }}
             />{" "}
-            Scheduled slideshow
+            Scheduled Slideshow
           </span>
           <span className="inline-flex items-center gap-[6px]">
             <span
@@ -185,7 +185,7 @@ export function ScheduleClient({
                 borderColor: "#D4CFC0",
               }}
             />{" "}
-            Automation-driven
+            Automation-Driven
           </span>
           <span className="inline-flex items-center gap-[6px]">
             <span style={{ width: 2, height: 12, background: "#8B3A2F" }} />{" "}
@@ -208,7 +208,7 @@ export function ScheduleClient({
               color: "rgba(245,241,232,0.55)",
             }}
           >
-            Up next
+            Up Next
           </div>
           {upNext.length === 0 ? (
             <div
@@ -274,7 +274,7 @@ export function ScheduleClient({
               icon="plus"
               onClick={() => setAddOpen(true)}
             >
-              Add block
+              Add Block
             </Button>
           </div>
         </div>
@@ -331,7 +331,7 @@ export function ScheduleClient({
                 fontVariationSettings: "'opsz' 48",
               }}
             >
-              Ready to schedule
+              Ready to Schedule
             </div>
             <div className="mt-[2px] text-[11px] tracking-[-0.005em] text-muted">
               Drafts you can drop onto the timeline

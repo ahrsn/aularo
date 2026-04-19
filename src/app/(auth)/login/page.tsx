@@ -70,7 +70,7 @@ export default function LoginPage() {
 
   return (
     <FormPanel
-      title="Sign in"
+      title="Sign In"
       subtitle="Welcome back."
       footer={
         <>
@@ -89,7 +89,7 @@ export default function LoginPage() {
         className="w-full justify-center"
       >
         <GoogleLogo size={18} />
-        Continue with Google
+        Continue With Google
       </Button>
 
       <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-[0.08em] text-muted-2">
@@ -156,7 +156,7 @@ export default function LoginPage() {
             </>
           ) : (
             <>
-              Sign in
+              Sign In
               <Icon name="arrow-right" size={16} />
             </>
           )}

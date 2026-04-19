@@ -173,7 +173,7 @@ export function ProductStill() {
             }}
           >
             <Icon name="plus" size={10} />
-            New slideshow
+            New Slideshow
           </div>
         </div>
       </div>
@@ -304,7 +304,7 @@ export function ProductStill() {
                   className="font-serif"
                   style={{ fontSize: 11.5, fontWeight: 500 }}
                 >
-                  Playing now
+                  Playing Now
                 </span>
                 <span className="text-muted-2" style={{ fontSize: 10 }}>
                   4 slideshows · 4 rooms
@@ -314,7 +314,7 @@ export function ProductStill() {
                 className="text-muted"
                 style={{ fontSize: 9.5, textDecoration: "underline" }}
               >
-                View all displays
+                View All Displays
               </span>
             </div>
             <div
@@ -491,7 +491,7 @@ export function ProductStill() {
             className="uppercase text-muted-2"
             style={{ fontSize: 8.5, letterSpacing: "0.1em" }}
           >
-            Your events
+            Your Events
           </div>
           <div className="mt-[6px] flex flex-col gap-[6px]">
             {events.map((e) => (
@@ -532,14 +532,14 @@ export function ProductStill() {
             className="mt-[14px] uppercase text-muted-2"
             style={{ fontSize: 8.5, letterSpacing: "0.1em" }}
           >
-            This event
+            This Event
           </div>
           <div className="mt-[6px] flex flex-col gap-[5px]">
             {[
               { k: "Playing", v: "4" },
-              { k: "In draft", v: "1" },
+              { k: "In Draft", v: "1" },
               { k: "Paused", v: "1" },
-              { k: "Avg sync to displays", v: "11s" },
+              { k: "Avg Sync to Displays", v: "11s" },
             ].map((s) => (
               <div
                 key={s.k}
@@ -574,7 +574,7 @@ export function ProductStill() {
                 color: "#9AA099",
               }}
             >
-              Tonight&rsquo;s hand-off
+              Tonight&rsquo;s Hand-Off
             </div>
             <div
               className="font-serif"
@@ -597,7 +597,7 @@ export function ProductStill() {
               }}
             >
               <Icon name="eye" size={9} />
-              Preview tonight
+              Preview Tonight
             </div>
           </div>
         </div>

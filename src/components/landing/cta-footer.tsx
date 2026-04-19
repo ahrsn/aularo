@@ -4,7 +4,7 @@ import { Wordmark } from "@/components/ui/wordmark";
 
 const cols: Array<{ title: string; items: string[] }> = [
   { title: "Product", items: ["Features", "Pricing", "Changelog", "Status"] },
-  { title: "Use cases", items: ["Galleries", "Hotels", "Events", "Kiosks"] },
+  { title: "Use Cases", items: ["Galleries", "Hotels", "Events", "Kiosks"] },
   { title: "Company", items: ["About", "Customers", "Writing", "Careers"] },
   { title: "Support", items: ["Docs", "clarra.show", "Contact", "Security"] },
 ];
@@ -50,7 +50,7 @@ export function CTAFooter() {
                   iconRight="arrow-right"
                   className="w-full justify-center sm:w-auto"
                 >
-                  Start free trial
+                  Start Free Trial
                 </Button>
               </Link>
               <Button
@@ -58,7 +58,7 @@ export function CTAFooter() {
                 size="lg"
                 className="w-full justify-center sm:w-auto"
               >
-                Book a walkthrough
+                Book a Walkthrough
               </Button>
             </div>
             <div

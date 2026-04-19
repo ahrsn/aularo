@@ -4,7 +4,7 @@ import { Wordmark } from "@/components/ui/wordmark";
 
 const links = [
   { label: "Product", href: "#features" },
-  { label: "Use cases", href: "#use-cases" },
+  { label: "Use Cases", href: "#use-cases" },
   { label: "Pricing", href: "#pricing" },
   { label: "Docs", href: "#" },
 ];
@@ -43,11 +43,11 @@ export function LandingHeader() {
             href="/login"
             className="hidden px-3 py-2 text-[13.5px] font-medium tracking-[-0.005em] text-ink sm:inline-flex"
           >
-            Sign in
+            Sign In
           </Link>
           <Link href="/signup">
             <Button variant="primary" size="md">
-              Start free trial
+              Start Free Trial
             </Button>
           </Link>
         </div>

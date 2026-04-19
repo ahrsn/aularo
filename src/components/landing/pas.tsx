@@ -30,7 +30,7 @@ export function PAS() {
       <div className="mx-auto" style={{ maxWidth: 1120 }}>
         <div className="grid grid-cols-1 gap-10 md:gap-16 lg:grid-cols-[1fr_1.1fr]">
           <AnimateIn>
-            <Eyebrow className="mb-[12px]">The problem</Eyebrow>
+            <Eyebrow className="mb-[12px]">The Problem</Eyebrow>
             <h2
               className="font-serif text-[32px] leading-[1.1] md:text-[44px] md:leading-[1.08]"
               style={{
@@ -93,7 +93,7 @@ export function PAS() {
                   className="font-mono uppercase text-muted-2"
                   style={{ fontSize: 11, letterSpacing: "0.08em" }}
                 >
-                  Opening night / timeline
+                  Opening Night / Timeline
                 </div>
                 <div
                   className="font-mono text-moss"

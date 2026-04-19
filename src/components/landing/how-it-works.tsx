@@ -5,19 +5,19 @@ import { AnimateIn } from "@/components/ui/animate-in";
 const steps = [
   {
     n: "01",
-    title: "Compose the loop",
+    title: "Compose the Loop",
     body: "Drag slides in. Set transitions. Schedule when it should play. Clarra treats each slideshow like a short piece of writing — a few things, in order, well-paced.",
     icon: "stack",
   },
   {
     n: "02",
-    title: "Pair the screen",
+    title: "Pair the Screen",
     body: "Open clarra.show/screen on any browser — a cheap TV, a kiosk PC, a borrowed laptop. Enter the code. The screen knows what to show and when.",
     icon: "monitor",
   },
   {
     n: "03",
-    title: "Change your mind from anywhere",
+    title: "Change Your Mind From Anywhere",
     body: "Swap slides between rooms. Pause the atrium and unpause the foyer. Clarra keeps a record of who changed what, quietly, in the background.",
     icon: "arrows-clockwise",
   },
@@ -30,7 +30,7 @@ export function HowItWorks() {
         <AnimateIn>
           <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
             <div>
-              <Eyebrow className="mb-[10px]">How it works</Eyebrow>
+              <Eyebrow className="mb-[10px]">How It Works</Eyebrow>
               <h2
                 className="font-serif text-[32px] leading-[1.1] md:text-[44px] md:leading-[1.08]"
                 style={{
@@ -50,7 +50,7 @@ export function HowItWorks() {
               href="#"
               className="text-[13.5px] tracking-[-0.005em] text-moss underline underline-offset-[3px]"
             >
-              Read the full guide
+              Read the Full Guide
             </a>
           </div>
         </AnimateIn>

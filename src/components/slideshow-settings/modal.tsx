@@ -13,7 +13,7 @@ type Tab = "playback" | "look" | "schedule" | "access";
 
 const tabs: Array<{ key: Tab; label: string; icon: string }> = [
   { key: "playback", label: "Playback", icon: "play" },
-  { key: "look", label: "Look & feel", icon: "palette" },
+  { key: "look", label: "Look & Feel", icon: "palette" },
   { key: "schedule", label: "Schedule", icon: "calendar-blank" },
   { key: "access", label: "Access", icon: "lock-key" },
 ];
@@ -375,7 +375,7 @@ function PlaybackTab({
   return (
     <>
       <Row
-        label="Slide duration"
+        label="Slide Duration"
         hint="How long each slide stays on screen"
       >
         <div className="flex items-center gap-[14px]">
@@ -399,7 +399,7 @@ function PlaybackTab({
         </div>
       </Row>
       <Row
-        label="Shuffle order"
+        label="Shuffle Order"
         hint="Randomize slides each loop. Great for photo reels, bad for agendas."
       >
         <Toggle on={shuffle} onChange={(v) => onChange({ shuffle: v })} />
@@ -422,7 +422,7 @@ function PlaybackTab({
         />
       </Row>
       <Row
-        label="Ken Burns effect"
+        label="Ken Burns Effect"
         hint="Slow pan and zoom on photos. Adds life to static images."
       >
         <Toggle on={kenBurns} onChange={(v) => onChange({ kenBurns: v })} />
@@ -456,7 +456,7 @@ function LookTab({
         />
       </Row>
       <Row
-        label="Show captions"
+        label="Show Captions"
         hint="Photo captions appear at the bottom center"
       >
         <Toggle on={captions} onChange={(v) => onChange({ captions: v })} />
@@ -549,7 +549,7 @@ function AccessTab({
   return (
     <>
       <Row
-        label="Public preview link"
+        label="Public Preview Link"
         hint="Anyone with the link can view — not edit. Revoke anytime."
       >
         <Toggle on={!!slug} onChange={onToggle} />
@@ -575,7 +575,7 @@ function AccessTab({
         </div>
       )}
       <Row
-        label="Workspace members"
+        label="Workspace Members"
         hint="Everyone in your workspace with editor role or above can edit."
       >
         <div className="text-[12.5px] tracking-[-0.005em] text-muted">

@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { StatusText } from "@/components/ui/status-dot";
 import { PairModal } from "@/components/pair-modal";
+import { PrintPairSheet } from "@/components/print-pair-sheet";
 import { ConfirmDialog } from "@/components/ui/alert-dialog";
 import { useMountTransition } from "@/components/ui/motion";
 import {
@@ -103,7 +104,7 @@ export function DisplaysClient({
       <div className="flex min-w-0 flex-col gap-[22px]">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <div className="text-label">Connected screens</div>
+            <div className="text-label">Connected Screens</div>
             <h2 className="text-h2 mt-[6px]">
               {online.length} of {initialDisplays.length} online
             </h2>
@@ -121,7 +122,7 @@ export function DisplaysClient({
               onClick={onRefreshAll}
               disabled={busy || initialDisplays.length === 0}
             >
-              Refresh all
+              Refresh All
             </Button>
             <Button
               variant="ghost"
@@ -129,14 +130,14 @@ export function DisplaysClient({
               onClick={() => setPreassignOpen(true)}
               title="Create a display with a short code anyone can type"
             >
-              New display
+              New Display
             </Button>
             <Button
               variant="primary"
               icon="plus"
               onClick={() => setPairOpen(true)}
             >
-              Pair display
+              Pair Display
             </Button>
           </div>
         </div>
@@ -157,7 +158,7 @@ export function DisplaysClient({
           >
             <div></div>
             <div>Display</div>
-            <div>Now playing</div>
+            <div>Now Playing</div>
             <div>Status</div>
             <div></div>
           </div>
@@ -175,7 +176,7 @@ export function DisplaysClient({
                   icon="plus"
                   onClick={() => setPairOpen(true)}
                 >
-                  Pair your first display
+                  Pair Your First Display
                 </Button>
               </div>
             </div>
@@ -201,7 +202,7 @@ export function DisplaysClient({
                   size="sm"
                   onClick={() => setStatusFilter("all")}
                 >
-                  Clear filter
+                  Clear Filter
                 </Button>
               </div>
             </div>
@@ -525,7 +526,7 @@ function FleetHealth({
   return (
     <div className="rounded-[4px] border border-line bg-surface p-5">
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-label">Fleet health</div>
+        <div className="text-label">Fleet Health</div>
         {active !== "all" && (
           <button
             onClick={() => onFilter("all")}
@@ -696,7 +697,7 @@ function HeartbeatHeatmap({
   return (
     <div className="rounded-[4px] border border-line bg-surface p-5">
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-label">Heartbeat · 7 days</div>
+        <div className="text-label">Heartbeat · 7 Days</div>
         <div className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted">
           {empty ? "No data" : `${totalPings.toLocaleString()} pings`}
         </div>
@@ -827,7 +828,7 @@ function KioskKit() {
             style={{ color: "var(--moss)", opacity: 0.75 }}
           />
           <span className="text-label" style={{ letterSpacing: "0.09em" }}>
-            The kit
+            The Kit
           </span>
         </div>
         <span
@@ -1107,10 +1108,10 @@ function PreassignModal({
         <div className="flex items-center justify-between border-b border-line p-[18px_22px]">
           <div>
             <div className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted">
-              New display
+              New Display
             </div>
             <div className="text-h2 mt-1" style={{ fontSize: 22 }}>
-              {created ? "Display ready to pair" : "Add a display anyone can pair"}
+              {created ? "Display Ready to Pair" : "Add a Display Anyone Can Pair"}
             </div>
           </div>
           <button
@@ -1162,7 +1163,7 @@ function PreassignModal({
               </Button>
               <Link href="/app/settings/workspace">
                 <Button variant="primary" type="button" iconRight="arrow-right">
-                  Go to settings
+                  Go to Settings
                 </Button>
               </Link>
             </div>
@@ -1171,14 +1172,6 @@ function PreassignModal({
 
         {!created && workspaceSlug && (
           <div className="flex flex-col gap-4 p-[22px]">
-            <p className="font-serif text-[14.5px] leading-[1.5] text-[#3A433B]">
-              Whoever&rsquo;s at the TV types{" "}
-              <span className="rounded bg-[rgba(25,35,26,0.07)] px-[7px] py-[2px] font-mono text-[12.5px]">
-                {typeof window !== "undefined" ? window.location.host : ""}/d/{workspaceSlug}/CODE
-              </span>
-              . No login, no admin access.
-            </p>
-
             <label className="flex flex-col gap-1">
               <span className="text-label">Display name</span>
               <Input
@@ -1293,10 +1286,23 @@ function PreassignModal({
               <Button variant="ghost" type="button" onClick={copyUrl}>
                 {copied ? "Copied" : "Copy URL"}
               </Button>
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => window.print()}
+              >
+                Print
+              </Button>
               <Button variant="primary" type="button" onClick={onClose}>
                 Done
               </Button>
             </div>
+            <PrintPairSheet
+              displayName={name}
+              shortCode={created.shortCode}
+              pairUrl={claimUrl}
+              workspaceLabel={created.workspaceSlug}
+            />
           </div>
         )}
       </form>
@@ -1552,7 +1558,7 @@ function RotateCodeModal({
               onClick={doClear}
               disabled={busy || !cached.shortCode}
             >
-              Remove code
+              Remove Code
             </Button>
             <div className="flex gap-2">
               <Button
@@ -1561,7 +1567,7 @@ function RotateCodeModal({
                 onClick={() => doRotate(undefined)}
                 disabled={busy}
               >
-                Auto-generate
+                Auto-Generate
               </Button>
               <Button
                 variant="primary"

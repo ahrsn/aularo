@@ -84,7 +84,7 @@ export function GeneralForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col">
-      <Field label="Workspace name" hint="Shown in invites and on idle screens">
+      <Field label="Workspace Name" hint="Shown in invites and on idle screens">
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -131,7 +131,7 @@ export function GeneralForm({
         )}
       </Field>
 
-      <Field label="Time zone" hint="Used for scheduling and display clocks">
+      <Field label="Time Zone" hint="Used for scheduling and display clocks">
         <select
           value={timezone}
           onChange={(e) => setTimezone(e.target.value)}

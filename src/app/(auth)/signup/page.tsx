@@ -70,7 +70,7 @@ export default function SignupPage() {
 
   return (
     <FormPanel
-      title="Start your free trial"
+      title="Start Your Free Trial"
       subtitle="14 days free on Studio or Venue. Cancel anytime."
       footer={
         <>
@@ -89,7 +89,7 @@ export default function SignupPage() {
         className="w-full justify-center"
       >
         <GoogleLogo size={18} />
-        Continue with Google
+        Continue With Google
       </Button>
 
       <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-[0.08em] text-muted-2">
@@ -149,7 +149,7 @@ export default function SignupPage() {
             </>
           ) : (
             <>
-              Create account
+              Create Account
               <Icon name="arrow-right" size={16} />
             </>
           )}

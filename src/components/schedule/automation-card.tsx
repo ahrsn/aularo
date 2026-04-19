@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
+import { ConfirmDialog } from "@/components/ui/alert-dialog";
 import { deleteAutomation, toggleAutomation } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import type { Automation } from "@/lib/schema";
@@ -18,6 +19,7 @@ export function AutomationCard({
   const toast = useToast();
   const [on, setOn] = useState(a.on);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [, startTransition] = useTransition();
 
@@ -46,7 +48,11 @@ export function AutomationCard({
 
   function onDelete() {
     setMenuOpen(false);
-    if (!window.confirm(`Delete automation "${a.triggerLabel}"?`)) return;
+    setConfirmOpen(true);
+  }
+
+  function doDelete() {
+    setConfirmOpen(false);
     startTransition(async () => {
       try {
         await deleteAutomation({ id: a.id });
@@ -59,6 +65,7 @@ export function AutomationCard({
   }
 
   return (
+    <>
     <div
       className="grid gap-3 border-b border-line"
       style={{
@@ -159,5 +166,15 @@ export function AutomationCard({
         </div>
       </div>
     </div>
+    <ConfirmDialog
+      open={confirmOpen}
+      title="Delete this automation?"
+      description={`“${a.triggerLabel}” will stop running.`}
+      confirmLabel="Delete"
+      variant="danger"
+      onConfirm={doDelete}
+      onCancel={() => setConfirmOpen(false)}
+    />
+    </>
   );
 }

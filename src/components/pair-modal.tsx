@@ -140,7 +140,7 @@ export function PairModal({
                 type="submit"
                 disabled={!canSubmit}
               >
-                Pair display
+                Pair Display
               </Button>
             </div>
           </form>

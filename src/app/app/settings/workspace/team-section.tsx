@@ -68,7 +68,7 @@ export function TeamSection({
         >
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-[11.5px] font-medium uppercase tracking-[0.06em] text-muted">
-              Invite by email
+              Invite by Email
             </span>
             <Input
               type="email"
@@ -144,7 +144,7 @@ export function TeamSection({
                 borderBottom: "1px solid var(--line)",
               }}
             >
-              Pending invites
+              Pending Invites
             </div>
             {initialInvites.map((inv, i) => (
               <InviteRow

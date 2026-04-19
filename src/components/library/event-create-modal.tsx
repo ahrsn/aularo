@@ -78,7 +78,7 @@ export function EventCreateModal({
               Event
             </div>
             <div className="text-h2 mt-1" style={{ fontSize: 22 }}>
-              New event
+              New Event
             </div>
           </div>
           <button
@@ -131,7 +131,7 @@ export function EventCreateModal({
               Cancel
             </Button>
             <Button type="submit" variant="primary" disabled={busy || !name.trim()}>
-              {busy ? "Creating…" : "Create event"}
+              {busy ? "Creating…" : "Create Event"}
             </Button>
           </div>
         </div>

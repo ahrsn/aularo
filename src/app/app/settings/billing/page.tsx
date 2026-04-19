@@ -182,7 +182,7 @@ export default async function BillingPage() {
 
       <section className="flex flex-col gap-3">
         <div className="text-[12.5px] font-medium tracking-[-0.005em] text-muted">
-          Usage this month
+          Usage This Month
         </div>
         <div
           className="grid gap-3"

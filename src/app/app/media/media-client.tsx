@@ -137,7 +137,7 @@ export function MediaClient({
   const scopeLabel = useMemo(() => {
     if (scope === "all") return "all media";
     if (scope === "unassigned") return "Unassigned";
-    if (scope === "brand") return "Brand assets";
+    if (scope === "brand") return "Brand Assets";
     return events.find((e) => e.id === scope)?.name ?? "this event";
   }, [scope, events]);
 
@@ -309,7 +309,7 @@ export function MediaClient({
           targetEventId === null
             ? "Unassigned"
             : targetEventId === "brand"
-              ? "Brand assets"
+              ? "Brand Assets"
               : (events.find((e) => e.id === targetEventId)?.name ?? "event");
         toast.success(
           count === 1
@@ -374,7 +374,7 @@ export function MediaClient({
       {/* Header */}
       <div className="flex items-end justify-between gap-4">
         <div className="min-w-0">
-          <Eyebrow>Your media</Eyebrow>
+          <Eyebrow>Your Media</Eyebrow>
           <h2 className="text-h2 mt-[6px]">
             {initialAssets.length === 0 && uploading.length === 0
               ? "No media yet"
@@ -557,7 +557,7 @@ export function MediaClient({
           }
           scopeLabel={
             previewAsset.eventId === "brand"
-              ? "Brand assets"
+              ? "Brand Assets"
               : previewAsset.eventId
                 ? events.find((e) => e.id === previewAsset.eventId)?.name ??
                   "Event"
@@ -621,7 +621,7 @@ function EventTabs({
       label: e.name,
       count: counts[e.id] ?? 0,
     })),
-    { id: "brand", label: "Brand assets", count: counts.brand ?? 0 },
+    { id: "brand", label: "Brand Assets", count: counts.brand ?? 0 },
   ];
 
   return (
@@ -941,7 +941,7 @@ function BulkActionBar({
         className="cursor-pointer rounded-[3px] px-2 py-[3px] text-[12px] tracking-[-0.005em] hover:bg-[rgba(245,241,232,0.08)]"
         style={{ color: "rgba(245,241,232,0.85)" }}
       >
-        Select all visible
+        Select All Visible
       </button>
       <div className="ml-auto flex items-center gap-2">
         <Button
@@ -951,7 +951,7 @@ function BulkActionBar({
           onClick={onMove}
           disabled={count === 0}
         >
-          Move to event
+          Move to Event
         </Button>
         <Button
           variant="onDarkGhost"
@@ -995,7 +995,7 @@ function MoveToEventMenu({
   const options: Array<{ id: string | null | "brand"; label: string }> = [
     { id: null, label: "Unassigned" },
     ...events.map((e) => ({ id: e.id as string, label: e.name })),
-    { id: "brand", label: "Brand assets" },
+    { id: "brand", label: "Brand Assets" },
   ];
   return (
     <div
@@ -1013,7 +1013,7 @@ function MoveToEventMenu({
       >
         <div className="flex items-center justify-between border-b border-line px-[18px] py-[14px]">
           <div className="font-mono text-[10.5px] uppercase tracking-[0.1em] text-muted">
-            Move selection to…
+            Move Selection to…
           </div>
           <button
             type="button"
@@ -1781,7 +1781,7 @@ function EmptyDropzone({ onBrowse }: { onBrowse: () => void }) {
           fontVariationSettings: "'opsz' 48",
         }}
       >
-        Drop files to upload
+        Drop Files to Upload
       </div>
       <div className="mt-1 max-w-[320px] text-[13px] leading-[1.5] tracking-[-0.005em] text-muted">
         Drag from your desktop, or browse. Anything you upload is ready to pin
@@ -1789,7 +1789,7 @@ function EmptyDropzone({ onBrowse }: { onBrowse: () => void }) {
       </div>
       <div className="mt-5">
         <Button variant="primary" size="md" icon="folder-open" onClick={onBrowse}>
-          Browse files
+          Browse Files
         </Button>
       </div>
       <div className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted-2">
@@ -1843,7 +1843,7 @@ function ScopedEmpty({
           </Button>
         ) : (
           <Button variant="primary" size="sm" icon="folder-open" onClick={onBrowse}>
-            Browse files
+            Browse Files
           </Button>
         )}
       </div>

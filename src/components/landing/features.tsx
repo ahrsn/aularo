@@ -5,42 +5,42 @@ import { AnimateIn } from "@/components/ui/animate-in";
 const features = [
   {
     icon: "calendar-blank",
-    title: "Multi-event scheduling",
+    title: "Multi-Event Scheduling",
     body: "Plan what plays, where, and when — across weeks of overlapping events.",
   },
   {
     icon: "users-three",
-    title: "Team roles",
+    title: "Team Roles",
     body: "Producers edit, venue staff pause. Every change is logged.",
   },
   {
     icon: "arrows-clockwise",
-    title: "Instant sync",
+    title: "Instant Sync",
     body: "Edits arrive on every paired display in under 15 seconds.",
   },
   {
     icon: "wifi-slash",
-    title: "Offline safe",
+    title: "Offline Safe",
     body: "A display that loses its connection keeps playing the last loop.",
   },
   {
     icon: "monitor-play",
-    title: "Any screen, any browser",
+    title: "Any Screen, Any Browser",
     body: "Pair with a short code. No hardware to buy, no app to install.",
   },
   {
     icon: "cloud-check",
-    title: "Drive + Dropbox sync",
+    title: "Drive + Dropbox Sync",
     body: "Drop files in Google Drive or Dropbox. Clarra picks them up on the screen.",
   },
   {
     icon: "clock-countdown",
-    title: "Run-of-show timers",
+    title: "Run-of-Show Timers",
     body: "Countdown to the next session, the next break, the next bow.",
   },
   {
     icon: "shield-check",
-    title: "SOC 2, SSO, audit log",
+    title: "SOC 2, SSO, Audit Log",
     body: "Enterprise requirements treated as table stakes, not add-ons.",
   },
 ];
