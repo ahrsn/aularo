@@ -1337,34 +1337,6 @@ function InlineCodeStatus({
   );
 }
 
-function CodeStatusChip({
-  state,
-}: {
-  state: "idle" | "checking" | "available" | "taken" | "invalid";
-}) {
-  if (state === "idle")
-    return (
-      <div className="shrink-0 font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-2">
-        —
-      </div>
-    );
-  const map = {
-    checking: { label: "Checking", color: "var(--muted)" },
-    available: { label: "Available", color: "#3B5A41" },
-    taken: { label: "Taken", color: "#8B3A2F" },
-    invalid: { label: "Invalid", color: "#8B6B2F" },
-  } as const;
-  const entry = map[state];
-  return (
-    <div
-      className="shrink-0 font-mono text-[10.5px] uppercase tracking-[0.06em]"
-      style={{ color: entry.color }}
-    >
-      {entry.label}
-    </div>
-  );
-}
-
 function RotateCodeModal({
   display,
   workspaceSlug,

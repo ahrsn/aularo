@@ -48,10 +48,11 @@ export default async function AppLayout({
       offline: 4,
     };
     nowPlaying = displays
+      .filter((d) => d.status !== "pairing")
       .map((d) => ({
         id: d.id,
         name: d.name,
-        status: d.status,
+        status: d.status as SidebarNowPlaying["status"],
         slideshowName: d.currentSlideshowId
           ? slideshowName.get(d.currentSlideshowId) ?? null
           : null,

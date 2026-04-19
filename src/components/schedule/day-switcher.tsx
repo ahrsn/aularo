@@ -22,7 +22,7 @@ export function DaySwitcher({
       className="flex overflow-hidden rounded-[4px] border border-line bg-surface"
       style={{ gap: 0 }}
     >
-      {days.map((k, i) => {
+      {days.map((k) => {
         const sel = k === activeKey;
         const isToday = k === today;
         const { weekday, date } = formatDayLabel(k);
