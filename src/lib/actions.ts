@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { randomBytes, randomUUID } from "node:crypto";
-import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
 import { getWorkspaceBySlug, requireActiveWorkspace, workspaceRef } from "./workspace";
 import { requireUser } from "./auth-session";
@@ -24,7 +23,16 @@ import {
   displayLimitFor,
 } from "./plan";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { clearSessionCookie } from "./auth-session";
+import { rateLimiter } from "./rate-limit";
+
+async function clientIpFromAction(): Promise<string> {
+  const h = await headers();
+  const xff = h.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0]!.trim();
+  return h.get("x-real-ip") ?? "local";
+}
 
 const PAIR_CODE_TTL_MS = 10 * 60 * 1000;
 
@@ -109,27 +117,25 @@ export async function addSlide(input: z.infer<typeof addSlideSchema>) {
   const { uid, userName, workspaceId } = await requireActiveWorkspace();
   const ref = workspaceRef(workspaceId).collection("slideshows").doc(slideshowId);
   const slide = { id: randomUUID(), kind, data };
-  if (!afterSlideId) {
-    await ref.update({
-      slides: FieldValue.arrayUnion(slide),
+  // Always go through a transaction — prior arrayUnion append path raced with
+  // concurrent reorder/update mutations and could lose writes.
+  await adminDb().runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new Error("SLIDESHOW_NOT_FOUND");
+    const slides = (snap.get("slides") ?? []) as Array<{ id: string }>;
+    const next = [...slides];
+    if (afterSlideId) {
+      const insertAt = slides.findIndex((s) => s.id === afterSlideId);
+      next.splice(insertAt < 0 ? next.length : insertAt + 1, 0, slide);
+    } else {
+      next.push(slide);
+    }
+    tx.update(ref, {
+      slides: next,
       updatedAt: Date.now(),
       updatedBy: userName ?? uid,
     });
-  } else {
-    await adminDb().runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      if (!snap.exists) throw new Error("SLIDESHOW_NOT_FOUND");
-      const slides = (snap.get("slides") ?? []) as Array<{ id: string }>;
-      const insertAt = slides.findIndex((s) => s.id === afterSlideId);
-      const next = [...slides];
-      next.splice(insertAt < 0 ? next.length : insertAt + 1, 0, slide);
-      tx.update(ref, {
-        slides: next,
-        updatedAt: Date.now(),
-        updatedBy: userName ?? uid,
-      });
-    });
-  }
+  });
   revalidatePath(`/app/library/${slideshowId}`);
   return slide;
 }
@@ -350,19 +356,32 @@ export async function unpairDisplay(displayId: string) {
 }
 
 /**
- * Bumps a `refreshAt` field on every online display so connected kiosks
- * can pick up the change via their existing Firestore listener and
- * soft-reload their view. Doesn't force offline displays.
+ * Bumps a `refreshAt` field on every display so connected kiosks pick up
+ * the change via their existing Firestore listener and soft-reload.
+ *
+ * Writes are chunked (400/batch — well below the 500 doc Firestore limit)
+ * and per-display refreshAt is jittered across a 30s window to avoid a
+ * thundering-herd reload and simultaneous R2 refetch across every kiosk in
+ * the workspace.
  */
+const REFRESH_JITTER_MS = 30_000;
+const FIRESTORE_BATCH_LIMIT = 400;
 export async function refreshAllDisplays() {
-  const { workspaceId } = await requireActiveWorkspace();
+  const { workspaceId, role } = await requireActiveWorkspace();
+  if (role === "viewer") throw new Error("ONLY_EDITORS");
+
   const snap = await workspaceRef(workspaceId).collection("displays").get();
   const now = Date.now();
-  const batch = adminDb().batch();
-  snap.docs.forEach((d) => {
-    batch.update(d.ref, { refreshAt: now });
-  });
-  await batch.commit();
+  for (let i = 0; i < snap.docs.length; i += FIRESTORE_BATCH_LIMIT) {
+    const chunk = snap.docs.slice(i, i + FIRESTORE_BATCH_LIMIT);
+    const batch = adminDb().batch();
+    for (const d of chunk) {
+      batch.update(d.ref, {
+        refreshAt: now + Math.floor(Math.random() * REFRESH_JITTER_MS),
+      });
+    }
+    await batch.commit();
+  }
   revalidatePath("/app/displays");
   return { count: snap.size };
 }
@@ -385,7 +404,7 @@ export async function togglePublicPreview(
   assertCan(plan, "preview_links");
   const ref = workspaceRef(workspaceId).collection("slideshows").doc(id);
   if (enabled) {
-    const slug = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+    const slug = randomUUID().replace(/-/g, "").slice(0, 16).toLowerCase();
     await ref.update({ publicSlug: slug, updatedAt: Date.now() });
     return { slug };
   } else {
@@ -1090,6 +1109,20 @@ export async function moveMediaAssetsToEvent(
   return { count: assetIds.length };
 }
 
+const renameAssetSchema = z.object({
+  assetId: z.string().min(1),
+  name: z.string().min(1).max(255),
+});
+
+export async function renameMediaAsset(
+  input: z.infer<typeof renameAssetSchema>,
+) {
+  const { assetId, name } = renameAssetSchema.parse(input);
+  const { workspaceId } = await requireActiveWorkspace();
+  await workspaceRef(workspaceId).collection("media").doc(assetId).update({ name });
+  revalidatePath("/app/media");
+}
+
 // ── Workspace + members ─────────────────────────────────────────────────
 
 const renameWorkspaceSchema = z.object({
@@ -1155,7 +1188,7 @@ export async function toggleQrSubmissions(
   const { workspaceId } = await requireActiveWorkspace();
   const ref = workspaceRef(workspaceId).collection("slideshows").doc(id);
   if (enabled) {
-    const slug = randomUUID().replace(/-/g, "").slice(0, 6).toUpperCase();
+    const slug = randomUUID().replace(/-/g, "").slice(0, 16).toLowerCase();
     await ref.update({ submissionSlug: slug, updatedAt: Date.now() });
     return { slug };
   } else {
@@ -1165,19 +1198,32 @@ export async function toggleQrSubmissions(
 }
 
 const submitQrSchema = z.object({
-  slug: z.string().min(4).max(12),
+  slug: z.string().min(4).max(32),
   fromName: z.string().max(80).optional(),
   message: z.string().max(500).optional(),
-  link: z.string().url().optional(),
+  link: z
+    .string()
+    .url()
+    .refine((u) => /^https?:\/\//i.test(u), {
+      message: "link must be http or https",
+    })
+    .optional(),
 });
 
 /**
- * Public endpoint — anyone with a slug can submit. Rate-limited informally
- * by expecting short slugs; production should add IP + captcha.
+ * Public endpoint — anyone with a slug can submit. Rate-limited by IP to
+ * deter flooding; link submissions also moderated before appearing on-screen.
  */
 export async function submitToQr(input: z.infer<typeof submitQrSchema>) {
   const { slug, fromName, message, link } = submitQrSchema.parse(input);
   if (!message && !link) throw new Error("EMPTY_SUBMISSION");
+
+  const ip = await clientIpFromAction();
+  const rl = await rateLimiter().consume(`qr:submit:${ip}`, {
+    limit: 5,
+    windowMs: 60_000,
+  });
+  if (!rl.allowed) throw new Error("RATE_LIMITED");
 
   const query = await adminDb()
     .collectionGroup("slideshows")
@@ -1256,18 +1302,24 @@ export async function approveSubmission(
         },
       };
 
-  const batch = adminDb().batch();
-  batch.update(slideshowRef, {
-    slides: FieldValue.arrayUnion(slide),
-    updatedAt: Date.now(),
-    updatedBy: userName ?? uid,
+  // Transactional: reading the slideshow's current slides and appending in
+  // one tx avoids the race window arrayUnion leaves open against concurrent
+  // slide reorders/edits.
+  await adminDb().runTransaction(async (tx) => {
+    const slideshowSnap = await tx.get(slideshowRef);
+    if (!slideshowSnap.exists) throw new Error("SLIDESHOW_NOT_FOUND");
+    const slides = (slideshowSnap.get("slides") ?? []) as Array<{ id: string }>;
+    tx.update(slideshowRef, {
+      slides: [...slides, slide],
+      updatedAt: Date.now(),
+      updatedBy: userName ?? uid,
+    });
+    tx.update(ref, {
+      status: "approved",
+      approvedBy: userName ?? uid,
+      approvedAt: Date.now(),
+    });
   });
-  batch.update(ref, {
-    status: "approved",
-    approvedBy: userName ?? uid,
-    approvedAt: Date.now(),
-  });
-  await batch.commit();
   revalidatePath(`/app/library/${data.slideshowId}`);
 }
 

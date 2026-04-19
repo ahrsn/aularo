@@ -110,18 +110,20 @@ export async function listMembers(
     role: d.get("role") as "owner" | "editor" | "viewer",
     joinedAt: (d.get("joinedAt") as number) ?? 0,
   }));
-  // Batch-fetch user profiles
-  const { adminDb } = await import("./firebase-admin");
-  const profilePromises = members.map(async (m) => {
-    const user = await adminDb().collection("users").doc(m.uid).get();
+  if (members.length === 0) return [];
+  const db = adminDb();
+  const refs = members.map((m) => db.collection("users").doc(m.uid));
+  const profiles = await db.getAll(...refs);
+  const byUid = new Map(profiles.map((p) => [p.id, p]));
+  return members.map((m) => {
+    const profile = byUid.get(m.uid);
     return {
       ...m,
-      email: (user.get("email") as string) ?? null,
-      displayName: (user.get("displayName") as string) ?? null,
-      photoURL: (user.get("photoURL") as string) ?? null,
+      email: (profile?.get("email") as string) ?? null,
+      displayName: (profile?.get("displayName") as string) ?? null,
+      photoURL: (profile?.get("photoURL") as string) ?? null,
     };
   });
-  return Promise.all(profilePromises);
 }
 
 export async function listInvites(workspaceId: string): Promise<Invite[]> {
