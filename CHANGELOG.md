@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.0.0-beta.2] — 2026-04-18
+
+A stability and polish pass before wider rollout. Nothing flashy — just the platform running smoother and handling edge cases better.
+
+### Media
+
+The media library got a meaningful upgrade. Browsing large asset libraries is faster, the upload experience is cleaner, and a few rough edges in the grid view are gone.
+
+### Billing
+
+The billing flow is more reliable end to end. Plan upgrades and webhook events are handled more consistently across edge cases.
+
+### General
+
+- Pairing and screen connections handle high-traffic moments more gracefully
+- A few fixes to how slideshow data loads on slower connections
+- Small copy and layout tweaks on the landing page
+- Integrations settings cleaned up
+
+---
+
 ## [1.0.0-beta.1] — 2026-04-18
 
 Clarra is live.
