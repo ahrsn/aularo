@@ -438,7 +438,7 @@ function IntegrationCard({
       className="flex flex-col rounded-[4px] border border-line bg-surface"
       style={{ padding: 18 }}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex flex-1 items-start gap-3">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[6px]"
           style={{ background: "#F5F1E8", border: "1px solid var(--line)" }}

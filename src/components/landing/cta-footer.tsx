@@ -125,8 +125,8 @@ export function CTAFooter() {
             letterSpacing: "-0.005em",
           }}
         >
-          <div>© Clarra · Portland, Oregon.</div>
-          <div className="flex gap-5">
+          <div>© Clarra · Raleigh, NC.</div>
+          <div className="flex items-center gap-5">
             <a href="#" className="text-inherit no-underline">
               Privacy
             </a>
@@ -135,6 +135,15 @@ export function CTAFooter() {
             </a>
             <a href="#" className="text-inherit no-underline">
               SOC 2
+            </a>
+            <a
+              href="https://chaosdigital.net"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-underline"
+              style={{ color: "rgba(245,241,232,0.5)" }}
+            >
+              Built by Chaos Digital
             </a>
           </div>
         </div>
