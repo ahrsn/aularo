@@ -7,6 +7,8 @@ const bodySchema = z.object({
   workspaceId: z.string(),
   displayId: z.string(),
   screenId: z.string(),
+  ts: z.number().int().optional(),
+  sig: z.string().optional(),
 });
 
 /**
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
   const { workspaceId, displayId } = parsed.data;
   const rl = await rateLimiter().consume(
     `heartbeat:${workspaceId}:${displayId}`,
-    { limit: 60, windowMs: 60_000 },
+    { limit: 60, windowMs: 60_000, onError: "closed" },
   );
   if (!rl.allowed) return rateLimitedResponse(rl.retryAfterMs);
 

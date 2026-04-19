@@ -11,10 +11,14 @@ export async function createSessionCookie(idToken: string) {
     expiresIn: SESSION_EXPIRES_MS,
   });
   const jar = await cookies();
+  // `secure: true` on every environment except local dev. Gating only on
+  // NODE_ENV === "production" previously meant any preview/staging build
+  // where NODE_ENV landed as anything else (e.g. "staging") shipped session
+  // cookies over HTTP.
   jar.set(SESSION_COOKIE, cookie, {
     maxAge: SESSION_EXPIRES_MS / 1000,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV !== "development",
     sameSite: "lax",
     path: "/",
   });

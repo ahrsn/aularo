@@ -3,6 +3,7 @@
 import { useEffect, useState, use as usePromise } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { firestore } from "@/lib/firebase-client";
+import { getDisplayAuthSecret, signHeartbeatClient } from "@/lib/screen-id";
 import { LiveScreen } from "@/components/show/live-screen";
 import { IdleScreen } from "@/components/show/slides";
 
@@ -93,15 +94,37 @@ export default function LiveDisplayPage({
     return () => unsub();
   }, [workspaceId, display?.currentSlideshowId]);
 
-  // Heartbeat every 30s while live.
+  // Heartbeat every 30s while live. Sign with the per-display secret when
+  // one is present (post-migration); fall back to unsigned for displays
+  // paired before the secret rollout (the server also falls back to
+  // screenId-only for those).
   useEffect(() => {
     if (!workspaceId || !screenId) return;
-    const ping = () => {
-      fetch("/api/display/heartbeat", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ workspaceId, displayId, screenId }),
-      }).catch(() => {});
+    const ping = async () => {
+      const ts = Date.now();
+      const secret = getDisplayAuthSecret();
+      let sig: string | undefined;
+      if (secret) {
+        try {
+          sig = await signHeartbeatClient(secret, workspaceId, displayId, ts);
+        } catch {
+          sig = undefined;
+        }
+      }
+      try {
+        await fetch("/api/display/heartbeat", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            workspaceId,
+            displayId,
+            screenId,
+            ...(sig ? { ts, sig } : {}),
+          }),
+        });
+      } catch {
+        // Heartbeat is best-effort — the server will mark offline if we miss.
+      }
     };
     ping();
     const t = setInterval(ping, 30_000);

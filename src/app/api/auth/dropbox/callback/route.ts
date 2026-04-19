@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth-session";
 import { adminDb } from "@/lib/firebase-admin";
 import { exchangeDropboxCode, getDropboxAccountEmail } from "@/lib/dropbox";
+import { encryptDropboxTokens } from "@/lib/token-crypto";
 
 export async function GET(req: NextRequest) {
   const user = await getSessionUser();
@@ -58,12 +59,12 @@ export async function GET(req: NextRequest) {
           accountEmail: email,
           connectedAt: Date.now(),
           lastSyncAt: null,
-          oauthTokens: {
+          oauthTokens: encryptDropboxTokens({
             access_token: accessToken,
             refresh_token: refreshToken,
             expires_at: expiresAt,
             account_id: tokens.account_id ?? null,
-          },
+          }),
         },
         { merge: true },
       );

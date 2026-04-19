@@ -1,16 +1,41 @@
 import "server-only";
+import type { z } from "zod";
 import { workspaceRef } from "./workspace";
 import { adminDb } from "./firebase-admin";
-import type {
-  Automation,
-  Display,
-  EventDoc,
-  Integration,
-  Invite,
-  MediaAsset,
-  ScheduleBlock,
-  Slideshow,
+import {
+  DisplaySchema,
+  SlideshowSchema,
+  type Automation,
+  type Display,
+  type EventDoc,
+  type Integration,
+  type Invite,
+  type MediaAsset,
+  type ScheduleBlock,
+  type Slideshow,
 } from "./schema";
+
+/**
+ * Read-boundary guard: validate a Firestore doc against its Zod schema.
+ * On mismatch we log and return null — the caller decides whether to skip
+ * (list helpers filter nulls) or surface the absence (single-doc getters
+ * return null already). Silently passing raw through would let callers
+ * dereference fields that Zod's defaults would have filled, so we don't.
+ */
+function parseDoc<T>(
+  schema: z.ZodType<T>,
+  raw: unknown,
+  kind: string,
+  id: string,
+): T | null {
+  const result = schema.safeParse(raw);
+  if (result.success) return result.data;
+  console.warn(
+    `[read-boundary] ${kind}/${id} failed schema validation:`,
+    result.error.issues.slice(0, 3),
+  );
+  return null;
+}
 
 export type QrSubmission = {
   id: string;
@@ -31,7 +56,11 @@ export async function listSlideshows(workspaceId: string): Promise<Slideshow[]> 
     .collection("slideshows")
     .orderBy("updatedAt", "desc")
     .get();
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) })) as Slideshow[];
+  return snap.docs
+    .map((d) =>
+      parseDoc(SlideshowSchema, { id: d.id, ...d.data() }, "slideshow", d.id),
+    )
+    .filter((s): s is Slideshow => s !== null);
 }
 
 export async function listDisplays(workspaceId: string): Promise<Display[]> {
@@ -39,7 +68,11 @@ export async function listDisplays(workspaceId: string): Promise<Display[]> {
     .collection("displays")
     .orderBy("pairedAt", "desc")
     .get();
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as object) })) as Display[];
+  return snap.docs
+    .map((d) =>
+      parseDoc(DisplaySchema, { id: d.id, ...d.data() }, "display", d.id),
+    )
+    .filter((d): d is Display => d !== null);
 }
 
 export async function getSlideshow(
@@ -51,7 +84,12 @@ export async function getSlideshow(
     .doc(slideshowId)
     .get();
   if (!snap.exists) return null;
-  return { id: snap.id, ...(snap.data() as object) } as Slideshow;
+  return parseDoc(
+    SlideshowSchema,
+    { id: snap.id, ...snap.data() },
+    "slideshow",
+    snap.id,
+  );
 }
 
 export async function listEvents(workspaceId: string): Promise<EventDoc[]> {
