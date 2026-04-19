@@ -323,6 +323,31 @@ a:focus-visible,
   animation: clarra-spin 0.75s linear infinite;
 }
 
+/* Logo loader — scale wave: three glyph shapes bounce in sequence */
+@keyframes clarra-logo-wave {
+  0%, 60%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(0.72);
+    opacity: 0.35;
+  }
+}
+.clarra-logo-loader .logo-shape {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: clarra-logo-wave 1.4s ease-in-out infinite;
+}
+.clarra-logo-loader .logo-shape:nth-child(1) { animation-delay: 0s; }
+.clarra-logo-loader .logo-shape:nth-child(2) { animation-delay: 0.14s; }
+.clarra-logo-loader .logo-shape:nth-child(3) { animation-delay: 0.28s; }
+@media (prefers-reduced-motion: reduce) {
+  .clarra-logo-loader .logo-shape {
+    animation: none;
+  }
+}
+
 @keyframes clarra-shimmer {
   0% {
     background-position: 0% 50%;
@@ -340,4 +365,220 @@ a:focus-visible,
   );
   background-size: 200% 200%;
   animation: clarra-shimmer 1.6s linear infinite;
+}
+
+/* Skeleton — shadcn-style shimmer sweep.
+   A muted base with a soft highlight band that translates left→right. */
+@keyframes clarra-skeleton-sweep {
+  0% {
+    background-position: -150% 0;
+  }
+  100% {
+    background-position: 250% 0;
+  }
+}
+.clarra-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--surface-sunk);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(251, 248, 240, 0.85) 50%,
+    transparent 100%
+  );
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  animation: clarra-skeleton-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .clarra-skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Print — pair sheet
+   Rendered via createPortal to document.body so it can be isolated cleanly
+   in print mode. Uses display-toggle (not visibility) so content paginates.
+   ──────────────────────────────────────────────────────────────────────── */
+.print-portal {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    size: Letter;
+    margin: 0.6in;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  body > *:not(.print-portal) {
+    display: none !important;
+  }
+  .print-portal {
+    display: block !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+.print-pair-sheet {
+  color: #0e1410;
+  font-family: var(--font-sans);
+}
+.print-pair-sheet .pps-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 0;
+}
+.print-pair-sheet .pps-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e3dfd3;
+  color: #19231a;
+}
+.print-pair-sheet .pps-header-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.print-pair-sheet .pps-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7268;
+}
+.print-pair-sheet .pps-display-name {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 500;
+  font-variation-settings: "opsz" 48;
+  color: #0e1410;
+}
+.print-pair-sheet .pps-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px 16px;
+  border: 1px solid #e3dfd3;
+  border-radius: 6px;
+  background: #fbf8f0;
+}
+.print-pair-sheet .pps-hero-label {
+  color: #6b7268;
+}
+.print-pair-sheet .pps-code {
+  font-family: var(--font-mono);
+  font-size: 96px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  color: #19231a;
+}
+.print-pair-sheet .pps-url-row {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.print-pair-sheet .pps-qr {
+  width: 168px;
+  height: 168px;
+  flex: 0 0 168px;
+  color: #0e1410;
+}
+.print-pair-sheet .pps-qr svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.print-pair-sheet .pps-url-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.print-pair-sheet .pps-url {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  line-height: 1.25;
+  color: #0e1410;
+  word-break: break-all;
+}
+.print-pair-sheet .pps-url-hint {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b7268;
+}
+.print-pair-sheet .pps-steps-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.print-pair-sheet .pps-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.print-pair-sheet .pps-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #0e1410;
+}
+.print-pair-sheet .pps-steps li em {
+  font-style: normal;
+  font-weight: 500;
+}
+.print-pair-sheet .pps-step-num {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e3dfd3;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  color: #19231a;
+  background: #fff;
+  align-self: center;
+}
+.print-pair-sheet .pps-footer {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e3dfd3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7268;
+}
+.print-pair-sheet .pps-footer-dot {
+  color: #d4cfc0;
 }
