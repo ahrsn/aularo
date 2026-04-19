@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [1.0.0-beta.2] — 2026-04-18
 
+Clarra, refined.
+
 A stability and polish pass before wider rollout. Nothing flashy — just the platform running smoother and handling edge cases better.
 
 ### Media
