@@ -13,6 +13,7 @@ import {
   createUploadUrl,
   deleteMediaAssets,
   moveMediaAssetsToEvent,
+  renameMediaAsset,
 } from "@/lib/actions";
 import { toErrorState, type ErrorState } from "@/lib/errors";
 import { useToast } from "@/components/ui/toast";
@@ -501,6 +502,18 @@ export function MediaClient({
                   else setPreviewId(a.id);
                 }}
                 onDelete={() => setDeleteIds([a.id])}
+                onRename={(newName) => {
+                  startTransition(async () => {
+                    try {
+                      await renameMediaAsset({ assetId: a.id, name: newName });
+                      toast.success("Renamed");
+                    } catch (e) {
+                      toast.error(e, "Rename failed.");
+                    } finally {
+                      router.refresh();
+                    }
+                  });
+                }}
               />
             ))}
           </div>
@@ -551,6 +564,18 @@ export function MediaClient({
                 : "Unassigned"
           }
           onClose={() => setPreviewId(null)}
+          onRename={(newName) => {
+            startTransition(async () => {
+              try {
+                await renameMediaAsset({ assetId: previewAsset.id, name: newName });
+                toast.success("Renamed");
+              } catch (e) {
+                toast.error(e, "Rename failed.");
+              } finally {
+                router.refresh();
+              }
+            });
+          }}
         />
       )}
     </div>
@@ -1216,18 +1241,52 @@ function AssetTile({
   selected,
   onClick,
   onDelete,
+  onRename,
 }: {
   asset: MediaAsset;
   selectMode: boolean;
   selected: boolean;
   onClick: () => void;
   onDelete: () => void;
+  onRename: (newName: string) => void;
 }) {
   const [hover, setHover] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(asset.name);
+  const [optimisticName, setOptimisticName] = useState<string | null>(null);
+  const editRef = useRef<HTMLInputElement>(null);
+
+  const displayName = optimisticName ?? asset.name;
   const kind = typeOf(asset.mime);
   const isImage = kind === "image";
   const isVideo = kind === "video";
   const isPdf = kind === "pdf";
+
+  function startEdit(e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditValue(asset.name);
+    setEditing(true);
+    setTimeout(() => {
+      editRef.current?.select();
+    }, 0);
+  }
+
+  function commitEdit() {
+    setEditing(false);
+    const trimmed = editValue.trim();
+    if (trimmed && trimmed !== asset.name) {
+      setOptimisticName(trimmed);
+      onRename(trimmed);
+    } else {
+      setEditValue(asset.name);
+    }
+  }
+
+  function onEditKeyDown(e: React.KeyboardEvent) {
+    e.stopPropagation();
+    if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
+    if (e.key === "Escape") { setEditing(false); setEditValue(asset.name); }
+  }
 
   return (
     <div
@@ -1321,29 +1380,55 @@ function AssetTile({
           </div>
         )}
 
-        {/* Hover delete (only when not in select mode) */}
+        {/* Hover actions (only when not in select mode) */}
         {!selectMode && hover && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            aria-label="Delete"
-            className="absolute right-2 top-2 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[3px] text-paper"
-            style={{
-              background: "rgba(14,20,16,0.6)",
-              backdropFilter: "blur(4px)",
-            }}
-          >
-            <Icon name="trash" size={14} />
-          </button>
+          <div className="absolute right-2 top-2 flex items-center gap-1">
+            <button
+              onClick={startEdit}
+              aria-label="Rename"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[3px] text-paper"
+              style={{
+                background: "rgba(14,20,16,0.6)",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              <Icon name="pencil-simple" size={14} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              aria-label="Delete"
+              className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[3px] text-paper"
+              style={{
+                background: "rgba(14,20,16,0.6)",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              <Icon name="trash" size={14} />
+            </button>
+          </div>
         )}
       </div>
 
       <div className="flex flex-col gap-[2px] p-[10px_12px]">
-        <div className="truncate text-[12.5px] font-medium tracking-[-0.005em] text-ink">
-          {asset.name}
-        </div>
+        {editing ? (
+          <input
+            ref={editRef}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={onEditKeyDown}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full truncate rounded-[3px] border border-[#19231A] bg-surface px-[6px] py-[2px] text-[12.5px] font-medium tracking-[-0.005em] text-ink outline-none"
+            aria-label="Rename asset"
+          />
+        ) : (
+          <div className="truncate text-[12.5px] font-medium tracking-[-0.005em] text-ink">
+            {displayName}
+          </div>
+        )}
         <div className="flex items-center gap-[6px] text-[11px] tracking-[-0.005em] text-muted">
           <span>{formatSize(asset.size)}</span>
           {asset.width && asset.height && (
@@ -1369,6 +1454,7 @@ function PreviewLightbox({
   event,
   scopeLabel,
   onClose,
+  onRename,
 }: {
   asset: MediaAsset;
   siblings: MediaAsset[];
@@ -1376,8 +1462,43 @@ function PreviewLightbox({
   event: EventDoc | null;
   scopeLabel: string;
   onClose: () => void;
+  onRename: (newName: string) => void;
 }) {
   void event;
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(asset.name);
+  const [optimisticName, setOptimisticName] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const displayName = optimisticName ?? asset.name;
+
+  useEffect(() => {
+    setNameValue(asset.name);
+    setEditingName(false);
+    setOptimisticName(null);
+  }, [asset.id, asset.name]);
+
+  function startNameEdit() {
+    setNameValue(displayName);
+    setEditingName(true);
+    setTimeout(() => nameInputRef.current?.select(), 0);
+  }
+
+  function commitNameEdit() {
+    setEditingName(false);
+    const trimmed = nameValue.trim();
+    if (trimmed && trimmed !== displayName) {
+      setOptimisticName(trimmed);
+      onRename(trimmed);
+    } else {
+      setNameValue(displayName);
+    }
+  }
+
+  function onNameKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") { e.preventDefault(); commitNameEdit(); }
+    if (e.key === "Escape") { setEditingName(false); setNameValue(asset.name); }
+  }
   const kind = typeOf(asset.mime);
   const index = siblings.findIndex((a) => a.id === asset.id);
   const total = siblings.length;
@@ -1551,10 +1672,33 @@ function PreviewLightbox({
           style={{ maxHeight: "86vh", overflow: "auto" }}
         >
           <div>
-            <Eyebrow>File</Eyebrow>
-            <div className="mt-1 break-all text-[14px] font-medium tracking-[-0.01em] text-ink">
-              {asset.name}
+            <div className="flex items-center justify-between gap-2">
+              <Eyebrow>File</Eyebrow>
+              <button
+                type="button"
+                onClick={startNameEdit}
+                aria-label="Rename"
+                className="cursor-pointer text-muted hover:text-ink"
+              >
+                <Icon name="pencil-simple" size={13} />
+              </button>
             </div>
+            {editingName ? (
+              <input
+                ref={nameInputRef}
+                value={nameValue}
+                onChange={(e) => setNameValue(e.target.value)}
+                onBlur={commitNameEdit}
+                onKeyDown={onNameKeyDown}
+                onClick={(e) => e.stopPropagation()}
+                className="mt-1 w-full rounded-[3px] border border-[#19231A] bg-surface px-[8px] py-[4px] text-[14px] font-medium tracking-[-0.01em] text-ink outline-none"
+                aria-label="Rename asset"
+              />
+            ) : (
+              <div className="mt-1 break-all text-[14px] font-medium tracking-[-0.01em] text-ink">
+                {displayName}
+              </div>
+            )}
           </div>
           <Field label="Type">{kind?.toUpperCase() ?? "FILE"}</Field>
           <Field label="Size">{formatSize(asset.size)}</Field>
