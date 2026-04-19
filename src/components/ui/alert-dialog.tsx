@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./button";
+import { Input } from "./input";
 import { useMountTransition } from "./motion";
 
 interface ConfirmDialogProps {
@@ -89,6 +90,89 @@ interface InfoAlertProps {
   title: string;
   message?: string;
   onClose: () => void;
+}
+
+interface PromptDialogProps {
+  open: boolean;
+  title: string;
+  description?: string;
+  placeholder?: string;
+  initialValue?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: (value: string) => void;
+  onCancel: () => void;
+}
+
+export function PromptDialog({
+  open,
+  title,
+  description,
+  placeholder,
+  initialValue = "",
+  confirmLabel = "Create",
+  cancelLabel = "Cancel",
+  onConfirm,
+  onCancel,
+}: PromptDialogProps) {
+  useEscapeKey(open, onCancel);
+  const { mounted, state } = useMountTransition(open, 320);
+  const [value, setValue] = useState(initialValue);
+  useEffect(() => {
+    if (open) setValue(initialValue);
+  }, [open, initialValue]);
+  if (!mounted) return null;
+  const trimmed = value.trim();
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!trimmed) return;
+    onConfirm(trimmed);
+  }
+  return (
+    <div
+      data-motion="overlay"
+      data-state={state}
+      onClick={onCancel}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+      style={{ background: "rgba(14,20,16,0.55)", left: "var(--overlay-left, 0px)" }}
+    >
+      <form
+        data-motion="panel"
+        data-state={state}
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={submit}
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-[400px] overflow-hidden rounded-[6px] border border-line bg-surface"
+        style={{ boxShadow: "0 24px 56px -16px rgba(14,20,16,0.4)" }}
+      >
+        <div className="flex flex-col gap-[10px] px-[22px] pt-[20px] pb-[16px]">
+          <div className="text-[15.5px] font-medium tracking-[-0.012em] text-ink">
+            {title}
+          </div>
+          {description && (
+            <div className="text-[12.5px] leading-[1.45] tracking-[-0.005em] text-muted">
+              {description}
+            </div>
+          )}
+          <Input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={placeholder}
+            autoFocus
+          />
+        </div>
+        <div className="flex justify-end gap-2 border-t border-line bg-paper px-[16px] py-[12px]">
+          <Button variant="ghost" size="sm" type="button" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+          <Button variant="primary" size="sm" type="submit" disabled={!trimmed}>
+            {confirmLabel}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
 }
 
 export function InfoAlert({ open, title, message, onClose }: InfoAlertProps) {

@@ -35,7 +35,7 @@ const tiers: Tier[] = [
       "Clarra watermark on-screen",
       "Email support",
     ],
-    cta: "Start free",
+    cta: "Start Free",
     href: "/signup",
     fuds: "Free forever · no upgrade nags",
   },
@@ -53,7 +53,7 @@ const tiers: Tier[] = [
       "No Clarra branding",
       "Email support",
     ],
-    cta: "Start 14-day trial",
+    cta: "Start 14-Day Trial",
     href: "/signup",
     primary: true,
     badge: "MOST POPULAR",
@@ -73,7 +73,7 @@ const tiers: Tier[] = [
       "100 GB storage",
       "Priority support",
     ],
-    cta: "Start 14-day trial",
+    cta: "Start 14-Day Trial",
     href: "/signup",
     fuds: "14 days free · cancel anytime",
   },
@@ -137,7 +137,7 @@ export function Pricing() {
                 border: "none",
               }}
             >
-              Annual · save 20%
+              Annual · Save 20%
             </button>
           </div>
         </div>

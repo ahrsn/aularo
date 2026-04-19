@@ -45,9 +45,9 @@ export function Hero() {
             className="text-[12.5px] tracking-[-0.005em] text-ink"
             style={{ fontFamily: "var(--font-geist), sans-serif" }}
           >
-            New · Multi-event scheduling
+            New · Multi-Event Scheduling
           </span>
-          <span className="text-[12.5px] text-muted">Learn more</span>
+          <span className="text-[12.5px] text-muted">Learn More</span>
         </div>
 
         <h1
@@ -104,7 +104,7 @@ export function Hero() {
               iconRight="arrow-right"
               className="w-full justify-center sm:w-auto"
             >
-              Start free trial
+              Start Free Trial
             </Button>
           </Link>
           <Button
@@ -113,7 +113,7 @@ export function Hero() {
             icon="play"
             className="w-full justify-center sm:w-auto"
           >
-            Watch a loop
+            Watch a Loop
           </Button>
         </div>
 

@@ -303,7 +303,7 @@ export function Quotes() {
             className="text-[13.5px] tracking-[-0.005em] underline underline-offset-[3px]"
             style={{ color: "#A9C2AD" }}
           >
-            Read 180+ reviews on G2
+            Read 180+ Reviews on G2
           </a>
           <span
             aria-hidden
@@ -318,7 +318,7 @@ export function Quotes() {
             className="text-[13.5px] tracking-[-0.005em] underline underline-offset-[3px]"
             style={{ color: "#A9C2AD" }}
           >
-            See case studies
+            See Case Studies
           </a>
         </div>
       </div>

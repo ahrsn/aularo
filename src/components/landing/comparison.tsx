@@ -16,31 +16,31 @@ const rows: Array<{
   cells: Record<string, Cell>;
 }> = [
   {
-    label: "Runs on any browser",
+    label: "Runs on Any Browser",
     note: "No dongles, no boxes, no installs",
     cells: { clarra: "yes", usb: "no", screencloud: "no", yodeck: "no" },
   },
   {
-    label: "One edit updates every screen",
+    label: "One Edit Updates Every Screen",
     note: "Under 15 seconds",
     cells: { clarra: "yes", usb: "no", screencloud: "partial", yodeck: "partial" },
   },
   {
-    label: "Schedule across multiple events",
+    label: "Schedule Across Multiple Events",
     note: "Not just day-parts",
     cells: { clarra: "yes", usb: "no", screencloud: "no", yodeck: "no" },
   },
   {
-    label: "Keeps playing if the internet drops",
+    label: "Keeps Playing if the Internet Drops",
     cells: { clarra: "yes", usb: "yes", screencloud: "partial", yodeck: "yes" },
   },
   {
-    label: "SOC 2, SSO, audit log",
+    label: "SOC 2, SSO, Audit Log",
     note: "Included, not an upsell",
     cells: { clarra: "yes", usb: "no", screencloud: "partial", yodeck: "no" },
   },
   {
-    label: "Priced per display, not per seat",
+    label: "Priced per Display, Not per Seat",
     cells: { clarra: "yes", usb: "yes", screencloud: "no", yodeck: "yes" },
   },
 ];

@@ -90,7 +90,7 @@ export function MediaPickerModal({
               Library
             </div>
             <div className="text-h2 mt-1" style={{ fontSize: 22 }}>
-              Pick an image
+              Pick an Image
             </div>
           </div>
           <button

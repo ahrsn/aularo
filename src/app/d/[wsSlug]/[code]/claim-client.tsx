@@ -40,8 +40,9 @@ export function ClaimClient({ wsSlug, code }: { wsSlug: string; code: string }) 
         const data = (await res.json()) as {
           workspaceId: string;
           displayId: string;
+          authSecret?: string | null;
         };
-        setPairedScreen(data.workspaceId, data.displayId);
+        setPairedScreen(data.workspaceId, data.displayId, data.authSecret ?? null);
         toast.success("Display claimed.");
         window.location.href = `/screen/${data.displayId}`;
       } catch {
@@ -94,7 +95,7 @@ export function ClaimClient({ wsSlug, code }: { wsSlug: string; code: string }) 
               onClick={() => window.location.reload()}
               className="mt-6 cursor-pointer rounded-[4px] border border-line px-4 py-2 text-[13px] tracking-[-0.005em] text-ink hover:bg-[rgba(25,35,26,0.06)]"
             >
-              Try again
+              Try Again
             </button>
           </>
         )}

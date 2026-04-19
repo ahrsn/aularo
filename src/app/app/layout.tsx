@@ -5,7 +5,8 @@ import { UIProvider } from "@/components/providers";
 import { WhatsNewModal } from "@/components/changelog/whats-new-modal";
 import { getSessionUser } from "@/lib/auth-session";
 import { adminDb } from "@/lib/firebase-admin";
-import { listEvents } from "@/lib/slideshow-data";
+import { listDisplays, listSlideshows } from "@/lib/slideshow-data";
+import type { SidebarNowPlaying } from "@/components/layout/sidebar";
 import { getChangelog } from "@/lib/changelog";
 import pkg from "../../../package.json";
 
@@ -30,24 +31,33 @@ export default async function AppLayout({
   const currentRelease =
     getChangelog().find((r) => r.version === pkg.version) ?? null;
   let workspaceName = "Workspace";
-  let events: Array<{
-    id: string;
-    name: string;
-    startAt: number | null;
-    endAt: number | null;
-  }> = [];
+  let nowPlaying: SidebarNowPlaying[] = [];
   if (workspaceId) {
-    const [ws, evts] = await Promise.all([
+    const [ws, displays, slideshows] = await Promise.all([
       adminDb().collection("workspaces").doc(workspaceId).get(),
-      listEvents(workspaceId),
+      listDisplays(workspaceId),
+      listSlideshows(workspaceId),
     ]);
     workspaceName = (ws.get("name") as string) ?? workspaceName;
-    events = evts.map((e) => ({
-      id: e.id,
-      name: e.name,
-      startAt: e.startAt ?? null,
-      endAt: e.endAt ?? null,
-    }));
+    const slideshowName = new Map(slideshows.map((s) => [s.id, s.name]));
+    const statusRank: Record<SidebarNowPlaying["status"], number> = {
+      live: 0,
+      online: 1,
+      paused: 2,
+      draft: 3,
+      offline: 4,
+    };
+    nowPlaying = displays
+      .map((d) => ({
+        id: d.id,
+        name: d.name,
+        status: d.status,
+        slideshowName: d.currentSlideshowId
+          ? slideshowName.get(d.currentSlideshowId) ?? null
+          : null,
+      }))
+      .filter((d) => d.slideshowName !== null)
+      .sort((a, b) => statusRank[a.status] - statusRank[b.status]);
   }
 
   const initials =
@@ -66,7 +76,7 @@ export default async function AppLayout({
           workspaceName={workspaceName}
           userInitials={initials}
           userName={user.name ?? user.email ?? "You"}
-          events={events}
+          nowPlaying={nowPlaying}
           appVersion={pkg.version}
         />
         <main className="min-w-0">

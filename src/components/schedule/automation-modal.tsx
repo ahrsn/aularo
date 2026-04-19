@@ -127,7 +127,7 @@ export function AutomationModal({
               Automation
             </div>
             <div className="text-h2 mt-1" style={{ fontSize: 22 }}>
-              {mode === "create" ? "New automation" : "Edit automation"}
+              {mode === "create" ? "New Automation" : "Edit Automation"}
             </div>
           </div>
           <button
@@ -240,7 +240,7 @@ export function AutomationModal({
               {busy
                 ? "Saving…"
                 : mode === "create"
-                  ? "Add automation"
+                  ? "Add Automation"
                   : "Save changes"}
             </Button>
           </div>

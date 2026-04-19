@@ -9,7 +9,7 @@ import { StatusText, type DisplayStatus } from "@/components/ui/status-dot";
 import { Eyebrow } from "@/components/ui/label";
 import { SlideshowSettingsModal } from "@/components/slideshow-settings/modal";
 import { EventCreateModal } from "@/components/library/event-create-modal";
-import { ConfirmDialog } from "@/components/ui/alert-dialog";
+import { ConfirmDialog, PromptDialog } from "@/components/ui/alert-dialog";
 import {
   createSlideshow,
   deleteSlideshow,
@@ -66,6 +66,7 @@ export function LibraryClient({
   const [settingsFor, setSettingsFor] = useState<Slideshow | null>(null);
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [newOpen, setNewOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const eventShows = useMemo(
@@ -97,9 +98,12 @@ export function LibraryClient({
     displayByAssignment.has(s.id),
   );
 
-  async function onNew() {
-    const name = window.prompt("Slideshow name?");
-    if (!name) return;
+  function onNew() {
+    setNewOpen(true);
+  }
+
+  function doCreate(name: string) {
+    setNewOpen(false);
     startTransition(async () => {
       try {
         const { id } = await createSlideshow({ name });
@@ -170,7 +174,7 @@ export function LibraryClient({
               {currentEvent
                 ? currentEvent.name
                 : activeEvent === UNASSIGNED
-                  ? "Unassigned slideshows"
+                  ? "Unassigned Slideshows"
                   : "—"}
             </h2>
             <div className="mt-[2px] text-[12.5px] tracking-[-0.005em] text-muted">
@@ -232,7 +236,7 @@ export function LibraryClient({
           {visible.length === 0 && (
             <div className="py-14 text-center">
               <div className="text-h2" style={{ fontSize: 20 }}>
-                Nothing here yet.
+                Nothing Here Yet.
               </div>
               <div className="mt-1 text-[13px] tracking-[-0.005em] text-muted">
                 {eventShows.length === 0
@@ -247,7 +251,7 @@ export function LibraryClient({
                   onClick={onNew}
                   disabled={pending}
                 >
-                  New slideshow
+                  New Slideshow
                 </Button>
               </div>
             </div>
@@ -258,7 +262,7 @@ export function LibraryClient({
       <aside className="flex flex-col gap-5">
         <div>
           <div className="mb-[10px] flex items-center justify-between">
-            <Eyebrow>Your events</Eyebrow>
+            <Eyebrow>Your Events</Eyebrow>
             <button
               type="button"
               onClick={() => setEventModalOpen(true)}
@@ -335,7 +339,7 @@ export function LibraryClient({
         </div>
 
         <div className="border-t border-line pt-[18px]">
-          <Eyebrow className="mb-3">This event</Eyebrow>
+          <Eyebrow className="mb-3">This Event</Eyebrow>
           <div className="flex flex-col gap-[14px]">
             {[
               {
@@ -343,7 +347,7 @@ export function LibraryClient({
                 v: eventShows.filter((s) => s.status === "live").length,
               },
               {
-                l: "In draft",
+                l: "In Draft",
                 v: eventShows.filter((s) => s.status === "draft").length,
               },
               {
@@ -351,7 +355,7 @@ export function LibraryClient({
                 v: eventShows.filter((s) => s.status === "paused").length,
               },
               {
-                l: "Total slides",
+                l: "Total Slides",
                 v: eventShows.reduce((n, s) => n + (s.slides?.length ?? 0), 0),
               },
             ].map((r) => (
@@ -388,6 +392,15 @@ export function LibraryClient({
       <EventCreateModal
         open={eventModalOpen}
         onClose={() => setEventModalOpen(false)}
+      />
+      <PromptDialog
+        open={newOpen}
+        title="New slideshow"
+        description="Give it a name to get started."
+        placeholder="Slideshow name"
+        confirmLabel="Create"
+        onConfirm={doCreate}
+        onCancel={() => setNewOpen(false)}
       />
       <ConfirmDialog
         open={deleteId !== null}
@@ -438,7 +451,7 @@ function NowStrip({
                 color: "var(--moss)",
               }}
             >
-              On view · Live
+              On View · Live
             </span>
           </div>
           <div className="flex items-baseline gap-[10px]">
@@ -452,7 +465,7 @@ function NowStrip({
                 lineHeight: 1.1,
               }}
             >
-              Now showing
+              Now Showing
             </h2>
             <span
               className="font-serif italic"

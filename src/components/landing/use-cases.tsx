@@ -18,7 +18,7 @@ type Case = {
 
 const cases: Case[] = [
   {
-    tag: "Galleries & museums",
+    tag: "Galleries & Museums",
     title: "Wall labels that keep up with the wall",
     body: "When a loan arrives, when a piece moves, when hours shift for a private event, one change updates every screen.",
     scene: {
@@ -39,7 +39,7 @@ const cases: Case[] = [
     byRole: "Director of Events, Lakeside Hall",
   },
   {
-    tag: "Hotels & lobbies",
+    tag: "Hotels & Lobbies",
     title: "A quiet welcome, room by room",
     body: "Spa hours in the lobby. Agendas by the mezzanine. The chef's menu beside the maitre d'.",
     scene: {
@@ -60,7 +60,7 @@ const cases: Case[] = [
     byRole: "Programming Lead, Atrium North",
   },
   {
-    tag: "Events & conferences",
+    tag: "Events & Conferences",
     title: "A program that keeps itself",
     body: "Reception at six. Gala loop at eight. Thank-you card at midnight. Clarra remembers so you don't.",
     scene: {
@@ -153,7 +153,7 @@ export function UseCases() {
     >
       <div className="mx-auto" style={{ maxWidth: 1120 }}>
         <div className="mb-10 max-w-[780px] md:mb-12">
-          <Eyebrow className="mb-[10px]">Use cases</Eyebrow>
+          <Eyebrow className="mb-[10px]">Use Cases</Eyebrow>
           <h2
             className="font-serif text-[32px] leading-[1.1] md:text-[44px] md:leading-[1.08]"
             style={{

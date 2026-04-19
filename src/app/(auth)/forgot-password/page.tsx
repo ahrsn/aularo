@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <FormPanel
-      title="Reset your password"
+      title="Reset Your Password"
       subtitle="We'll email you a link."
       footer={
         <>
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
               </>
             ) : (
               <>
-                Send reset link
+                Send Reset Link
                 <Icon name="arrow-right" size={16} />
               </>
             )}

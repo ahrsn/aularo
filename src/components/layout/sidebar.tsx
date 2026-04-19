@@ -1,19 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "firebase/auth";
 import { Icon } from "@/components/ui/icon";
+import { StatusDot, type DisplayStatus } from "@/components/ui/status-dot";
 import { Wordmark } from "@/components/ui/wordmark";
 import { firebaseAuth } from "@/lib/firebase-client";
 import { cn } from "@/lib/utils";
 
-type SidebarEvent = {
+export type SidebarNowPlaying = {
   id: string;
   name: string;
-  startAt: number | null;
-  endAt: number | null;
+  status: DisplayStatus;
+  slideshowName: string | null;
 };
 
 const nav = [
@@ -183,21 +184,18 @@ export function Sidebar({
   workspaceName = "Lakeside Hall",
   userInitials = "CL",
   userName = "You",
-  events = [],
+  nowPlaying = [],
   appVersion,
 }: {
   workspaceName?: string;
   userInitials?: string;
   userName?: string;
-  events?: SidebarEvent[];
+  nowPlaying?: SidebarNowPlaying[];
   appVersion?: string;
 }) {
   const pathname = usePathname();
-  const params = useSearchParams();
   const isSelected = (href: string) =>
     pathname === href || pathname?.startsWith(href + "/") || false;
-  const activeEventId =
-    pathname?.startsWith("/app/library") ? (params?.get("event") ?? null) : null;
 
   return (
     <aside
@@ -229,62 +227,48 @@ export function Sidebar({
               letterSpacing: "0.08em",
             }}
           >
-            Events
+            Now Playing
           </div>
           <Link
-            href="/app/library"
-            className="rounded-[3px] p-[2px] text-muted-2 hover:bg-[rgba(25,35,26,0.04)] hover:text-muted"
-            aria-label="Manage events"
+            href="/app/displays"
+            className="rounded-[3px] px-[4px] py-[2px] text-[10.5px] uppercase tracking-[0.06em] text-muted-2 hover:bg-[rgba(25,35,26,0.04)] hover:text-muted"
+            aria-label="See all displays"
           >
-            <Icon name="plus" size={11} />
+            See all
           </Link>
         </div>
-        {events.length === 0 ? (
+        {nowPlaying.length === 0 ? (
           <div className="text-[11px] leading-[1.4] tracking-[-0.005em] text-muted-2">
-            No events yet. Create one from the Library.
+            No displays paired yet.{" "}
+            <Link
+              href="/app/displays"
+              className="text-muted underline-offset-2 hover:underline"
+            >
+              Pair one
+            </Link>
+            .
           </div>
         ) : (
           <div className="flex flex-col">
-            {events.map((e) => {
-              const sel = activeEventId === e.id;
-              return (
-                <Link
-                  key={e.id}
-                  href={`/app/library?event=${encodeURIComponent(e.id)}`}
-                  className="rounded-[3px] px-[8px] py-[6px] transition-colors hover:bg-[rgba(25,35,26,0.04)]"
-                  style={{
-                    background: sel ? "#FBF8F0" : "transparent",
-                    border: sel
-                      ? "1px solid var(--line)"
-                      : "1px solid transparent",
-                    marginBottom: 2,
-                  }}
+            {nowPlaying.slice(0, 5).map((d) => (
+              <Link
+                key={d.id}
+                href="/app/displays"
+                className="rounded-[3px] px-[8px] py-[6px] transition-colors hover:bg-[rgba(25,35,26,0.04)]"
+                style={{ marginBottom: 2 }}
+              >
+                <div className="flex items-center gap-[6px] text-[12.5px] tracking-[-0.005em] text-ink">
+                  <StatusDot status={d.status} size={6} />
+                  <span className="truncate">{d.name}</span>
+                </div>
+                <div
+                  className="mt-[1px] truncate text-[11px] tracking-[-0.005em] text-muted"
+                  style={{ paddingLeft: 12 }}
                 >
-                  <div
-                    className="flex items-center gap-[6px] text-[12.5px] tracking-[-0.005em] text-ink"
-                    style={{ fontWeight: sel ? 500 : 400 }}
-                  >
-                    {sel && (
-                      <span
-                        className="rounded-full"
-                        style={{
-                          width: 5,
-                          height: 5,
-                          background: "#3B5A41",
-                        }}
-                      />
-                    )}
-                    <span className="truncate">{e.name}</span>
-                  </div>
-                  <div
-                    className="mt-[1px] truncate text-[11px] tracking-[-0.005em] text-muted"
-                    style={{ paddingLeft: sel ? 11 : 0 }}
-                  >
-                    {formatEventDates(e.startAt, e.endAt)}
-                  </div>
-                </Link>
-              );
-            })}
+                  {d.slideshowName ?? "Nothing scheduled"}
+                </div>
+              </Link>
+            ))}
           </div>
         )}
       </div>
@@ -313,15 +297,3 @@ export function Sidebar({
   );
 }
 
-function formatEventDates(start: number | null, end: number | null): string {
-  if (!start && !end) return "No dates set";
-  const fmt = (ms: number) =>
-    new Date(ms).toLocaleDateString("en", { month: "short", day: "numeric" });
-  if (start && end) {
-    if (new Date(start).toDateString() === new Date(end).toDateString()) {
-      return fmt(start);
-    }
-    return `${fmt(start)} — ${fmt(end)}`;
-  }
-  return fmt(start ?? end ?? 0);
-}
