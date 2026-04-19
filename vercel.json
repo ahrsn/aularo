@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/stale-displays",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/pair-codes",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/expired-invites",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}

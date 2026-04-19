@@ -75,6 +75,48 @@ Open <http://localhost:3000>.
 
 If step 7 takes >2s to swap, check the browser console for Firestore errors — usually a missing security-rule update.
 
+## Post-deploy (production / staging)
+
+These run once per Firebase project on top of the dev setup above.
+
+### Enable Firestore TTL sweepers
+
+Short-lived collections (`rateLimits`, `stripeEvents`, `pairingCodes`) write a
+`ttlAt` Firestore Timestamp. The TTL policy that actually sweeps them is a
+GCP-level config — it's **not** deployed by `firebase deploy` and must be
+enabled once per project. Without it those collections grow unbounded.
+
+```bash
+GCP_PROJECT=<your-project-id> ./scripts/enable-firestore-ttl.sh
+```
+
+Verify in the console: Firestore → TTL. You should see three enabled policies.
+
+### Wire Vercel Cron + `CRON_SECRET`
+
+`vercel.json` declares three cron schedules (stale-display marker every
+minute, pairing-code reaper every 15 min, expired-invite sweeper daily).
+Each route is gated by `Authorization: Bearer $CRON_SECRET`.
+
+1. `openssl rand -hex 32` to generate a secret.
+2. Vercel Dashboard → Project → Settings → Environment Variables → add
+   `CRON_SECRET` (same value in Preview + Production).
+3. Deploy. Vercel picks up `vercel.json` automatically and begins invoking
+   the schedules.
+
+### OAuth token encryption key
+
+`TOKEN_ENCRYPTION_KEY` enables at-rest encryption of Drive/Dropbox refresh
+tokens in Firestore. Set before users connect integrations in prod.
+
+```bash
+openssl rand -base64 32
+```
+
+Add to `.env.local` locally and to Vercel env vars for Preview + Production.
+
+Rotating this key invalidates every stored token — users must reconnect.
+
 ## Troubleshooting
 
 - **"FIREBASE_SERVICE_ACCOUNT env var missing"** — you haven't filled `.env.local` or the server didn't restart after you did. `pnpm dev` auto-reloads.

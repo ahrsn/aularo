@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { randomBytes, randomUUID } from "node:crypto";
+import { Timestamp } from "firebase-admin/firestore";
 import { z } from "zod";
 import { getWorkspaceBySlug, requireActiveWorkspace, workspaceRef } from "./workspace";
 import { requireUser } from "./auth-session";
@@ -23,16 +24,9 @@ import {
   displayLimitFor,
 } from "./plan";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { clearSessionCookie } from "./auth-session";
-import { rateLimiter } from "./rate-limit";
-
-async function clientIpFromAction(): Promise<string> {
-  const h = await headers();
-  const xff = h.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]!.trim();
-  return h.get("x-real-ip") ?? "local";
-}
+import { rateLimiter, getClientIpFromHeaders } from "./rate-limit";
+import { newDisplayAuthSecret, verifyHeartbeat } from "./display-auth";
 
 const PAIR_CODE_TTL_MS = 10 * 60 * 1000;
 
@@ -351,7 +345,20 @@ export async function renameDisplay(
 
 export async function unpairDisplay(displayId: string) {
   const { workspaceId } = await requireActiveWorkspace();
-  await workspaceRef(workspaceId).collection("displays").doc(displayId).delete();
+  const wsRef = workspaceRef(workspaceId);
+  const displayRef = wsRef.collection("displays").doc(displayId);
+  await adminDb().runTransaction(async (tx) => {
+    const snap = await tx.get(displayRef);
+    if (!snap.exists) return;
+    const wsSnap = await tx.get(wsRef);
+    const current = (wsSnap.get("displayCount") as number | undefined) ?? 0;
+    tx.delete(displayRef);
+    tx.set(
+      wsRef,
+      { displayCount: Math.max(0, current - 1) },
+      { merge: true },
+    );
+  });
   revalidatePath("/app/displays");
 }
 
@@ -393,7 +400,8 @@ const toggleSlugSchema = z.object({
 
 /**
  * Turn a public preview link on or off for a slideshow.
- * When on, generates a random 6-char slug. When off, clears it.
+ * When on, generates a random 16-hex-char slug (~64 bits of entropy — not
+ * brute-forceable). When off, clears it.
  */
 export async function togglePublicPreview(
   input: z.infer<typeof toggleSlugSchema>,
@@ -433,19 +441,18 @@ export async function claimPairingCode(
   const codeRef = adminDb()
     .collection("pairingCodes")
     .doc(code.toUpperCase());
+  const wsRef = workspaceRef(workspaceId);
 
-  // Enforce the per-plan display limit BEFORE consuming the code.
-  // Firestore transactions require reads before writes, so we pre-count here.
-  const wsSnap = await workspaceRef(workspaceId).get();
-  const displayLimit = (wsSnap.get("displayLimit") as number | undefined) ?? 1;
-  const currentCount = (
-    await workspaceRef(workspaceId).collection("displays").count().get()
-  ).data().count;
-  if (currentCount >= displayLimit) {
-    const err = new Error("DISPLAY_LIMIT_REACHED");
-    (err as Error & { limit?: number; current?: number }).limit = displayLimit;
-    (err as Error & { limit?: number; current?: number }).current = currentCount;
-    throw err;
+  // Counter seed: if `displayCount` has never been written on this workspace,
+  // do a one-shot aggregation count OUTSIDE the transaction. `count().get()`
+  // inside a transaction isn't tracked by Firestore's optimistic concurrency
+  // the way `tx.get(docRef)` is, so it would not prevent TOCTOU on first use.
+  // After this first claim the field is persisted and future txs read+write
+  // it atomically.
+  const wsSnapPre = await wsRef.get();
+  let seedCount = wsSnapPre.get("displayCount") as number | undefined;
+  if (seedCount === undefined) {
+    seedCount = (await wsRef.collection("displays").count().get()).data().count;
   }
 
   return await adminDb().runTransaction(async (tx) => {
@@ -455,8 +462,21 @@ export async function claimPairingCode(
     if (data.claimedAt) throw new Error("ALREADY_CLAIMED");
     if ((data.expiresAt as number) < Date.now()) throw new Error("EXPIRED");
 
-    const displayRef = workspaceRef(workspaceId).collection("displays").doc();
+    const wsSnap = await tx.get(wsRef);
+    const displayLimit =
+      (wsSnap.get("displayLimit") as number | undefined) ?? 1;
+    const currentCount =
+      (wsSnap.get("displayCount") as number | undefined) ?? seedCount;
+    if (currentCount >= displayLimit) {
+      const err = new Error("DISPLAY_LIMIT_REACHED");
+      (err as Error & { limit?: number; current?: number }).limit = displayLimit;
+      (err as Error & { limit?: number; current?: number }).current = currentCount;
+      throw err;
+    }
+
+    const displayRef = wsRef.collection("displays").doc();
     const now = Date.now();
+    const authSecret = newDisplayAuthSecret();
     tx.set(displayRef, {
       id: displayRef.id,
       name: label ?? "New display",
@@ -468,12 +488,20 @@ export async function claimPairingCode(
       pairedAt: now,
       lastHeartbeat: now,
       browserInfo: null,
+      authSecret,
     });
+    // Store the secret on the pairingCodes doc too so the kiosk can pick it
+    // up via /api/pair/check after it sees `claimed: true`. The secret is
+    // gated there by a screenId match and deleted after first read.
     tx.update(codeRef, {
       workspaceId,
       displayId: displayRef.id,
       claimedAt: now,
+      authSecret,
     });
+    // Bump the counter atomically so future claims see the new count even
+    // mid-transaction on a different request.
+    tx.set(wsRef, { displayCount: currentCount + 1 }, { merge: true });
     return { displayId: displayRef.id };
   });
 }
@@ -492,6 +520,7 @@ export async function issuePairingCode(
   const { screenId } = issueSchema.parse(input);
   const code = makeCode();
   const now = Date.now();
+  const expiresAt = now + PAIR_CODE_TTL_MS;
   await adminDb()
     .collection("pairingCodes")
     .doc(code)
@@ -501,10 +530,13 @@ export async function issuePairingCode(
       workspaceId: null,
       displayId: null,
       createdAt: now,
-      expiresAt: now + PAIR_CODE_TTL_MS,
+      expiresAt,
       claimedAt: null,
+      // Firestore TTL sweeper reclaims these ~24h after expiry. See
+      // scripts/enable-firestore-ttl.sh.
+      ttlAt: Timestamp.fromMillis(expiresAt + 60_000),
     });
-  return { code, expiresAt: now + PAIR_CODE_TTL_MS };
+  return { code, expiresAt };
 }
 
 function makeCode() {
@@ -546,24 +578,20 @@ export async function createPreassignedDisplay(
   const { workspaceId, role } = await requireActiveWorkspace();
   if (role === "viewer") throw new Error("ONLY_EDITORS");
 
-  // Enforce display limit.
-  const wsSnap = await workspaceRef(workspaceId).get();
-  const displayLimit = (wsSnap.get("displayLimit") as number | undefined) ?? 1;
-  const slug = (wsSnap.get("slug") as string | null) ?? null;
+  // Slug is static for a workspace — safe to read once outside the tx.
+  const wsSnapPre = await workspaceRef(workspaceId).get();
+  const slug = (wsSnapPre.get("slug") as string | null) ?? null;
   if (!slug) throw new Error("WORKSPACE_SLUG_REQUIRED");
-
-  const currentCount = (
-    await workspaceRef(workspaceId).collection("displays").count().get()
-  ).data().count;
-  if (currentCount >= displayLimit) {
-    const err = new Error("DISPLAY_LIMIT_REACHED");
-    (err as Error & { limit?: number; current?: number }).limit = displayLimit;
-    (err as Error & { limit?: number; current?: number }).current = currentCount;
-    throw err;
-  }
 
   const db = adminDb();
   const wsRef = workspaceRef(workspaceId);
+
+  // See claimPairingCode: seed the counter outside the tx on first use,
+  // otherwise count() inside the tx isn't serialized vs concurrent writes.
+  let seedCount = wsSnapPre.get("displayCount") as number | undefined;
+  if (seedCount === undefined) {
+    seedCount = (await wsRef.collection("displays").count().get()).data().count;
+  }
 
   // Pick a code. If admin supplied one, try it; if it collides, bubble up
   // so the UI can show the error. If omitted, retry a few times on collision.
@@ -575,6 +603,20 @@ export async function createPreassignedDisplay(
 
     try {
       const created = await db.runTransaction(async (tx) => {
+        // Limit check is inside the tx — two concurrent calls can't both
+        // squeeze past the cap.
+        const wsSnap = await tx.get(wsRef);
+        const displayLimit =
+          (wsSnap.get("displayLimit") as number | undefined) ?? 1;
+        const currentCount =
+          (wsSnap.get("displayCount") as number | undefined) ?? seedCount;
+        if (currentCount >= displayLimit) {
+          const err = new Error("DISPLAY_LIMIT_REACHED");
+          (err as Error & { limit?: number; current?: number }).limit = displayLimit;
+          (err as Error & { limit?: number; current?: number }).current = currentCount;
+          throw err;
+        }
+
         const existing = await tx.get(reservationRef);
         if (existing.exists) return { collision: true as const };
 
@@ -598,6 +640,7 @@ export async function createPreassignedDisplay(
           workspaceId,
           createdAt: now,
         });
+        tx.set(wsRef, { displayCount: currentCount + 1 }, { merge: true });
         return { collision: false as const, displayId: displayRef.id, code };
       });
 
@@ -774,15 +817,17 @@ export async function claimDisplayByShortCode(
       throw new Error("DISPLAY_IN_USE");
     }
 
+    const authSecret = newDisplayAuthSecret();
     tx.update(displayRef, {
       screenId,
       status: "online",
       pairedAt: now,
       lastHeartbeat: now,
       browserInfo: browserInfo ?? null,
+      authSecret,
     });
 
-    return { workspaceId: ws.workspaceId, displayId };
+    return { workspaceId: ws.workspaceId, displayId, authSecret };
   });
 }
 
@@ -792,21 +837,39 @@ const heartbeatSchema = z.object({
   workspaceId: z.string(),
   displayId: z.string(),
   screenId: z.string(),
+  // HMAC fields — optional for backward compat with displays paired before
+  // the auth-secret migration. New displays always supply both.
+  ts: z.number().int().optional(),
+  sig: z.string().optional(),
 });
 
 /**
  * Called every 30s from the /screen runtime to report liveness.
- * We trust the {workspaceId, displayId} pair only if the on-disk
- * screenId matches the caller's.
+ * If the display has an `authSecret` stored (post-migration), the heartbeat
+ * must be HMAC-signed with a timestamp inside a ±5min window. If not, we
+ * fall back to the legacy screenId-only check.
  */
 export async function heartbeat(input: z.infer<typeof heartbeatSchema>) {
-  const { workspaceId, displayId, screenId } = heartbeatSchema.parse(input);
+  const { workspaceId, displayId, screenId, ts, sig } = heartbeatSchema.parse(input);
   const ref = workspaceRef(workspaceId)
     .collection("displays")
     .doc(displayId);
   const snap = await ref.get();
   if (!snap.exists || snap.get("screenId") !== screenId) {
     throw new Error("NOT_AUTHORIZED");
+  }
+
+  const authSecret = snap.get("authSecret") as string | undefined;
+  if (authSecret) {
+    if (!ts || !sig) throw new Error("NOT_AUTHORIZED");
+    const ok = verifyHeartbeat({
+      secret: authSecret,
+      workspaceId,
+      displayId,
+      ts,
+      sig,
+    });
+    if (!ok) throw new Error("NOT_AUTHORIZED");
   }
 
   const now = Date.now();
@@ -980,9 +1043,18 @@ export async function toggleAutomation(
 
 // ── Media uploads (R2) ──────────────────────────────────────────────────
 
+// Allowlist of MIME types the media pipeline accepts. Anything else is
+// rejected at the signed-URL issue point — this closes the stored-XSS pivot
+// where an attacker could upload text/html and have R2 serve it as text/html
+// to the browser. Extend deliberately; do not relax to a broad string match.
+const MEDIA_MIME_ALLOW =
+  /^(image\/(png|jpeg|webp|gif|heic|heif|avif)|video\/(mp4|quicktime|webm))$/;
+
 const createUploadSchema = z.object({
   name: z.string().min(1).max(255),
-  mime: z.string().min(1),
+  mime: z.string().regex(MEDIA_MIME_ALLOW, {
+    message: "unsupported media type",
+  }),
   size: z.number().int().min(1).max(1024 * 1024 * 200), // 200 MB ceiling
   eventId: z.string().nullable().optional(),
 });
@@ -1218,7 +1290,7 @@ export async function submitToQr(input: z.infer<typeof submitQrSchema>) {
   const { slug, fromName, message, link } = submitQrSchema.parse(input);
   if (!message && !link) throw new Error("EMPTY_SUBMISSION");
 
-  const ip = await clientIpFromAction();
+  const ip = await getClientIpFromHeaders();
   const rl = await rateLimiter().consume(`qr:submit:${ip}`, {
     limit: 5,
     windowMs: 60_000,
@@ -1355,6 +1427,17 @@ export async function acceptInvite(token: string) {
   const inviteDoc = query.docs[0];
   const expiresAt = inviteDoc.get("expiresAt") as number | undefined;
   if (expiresAt && expiresAt < Date.now()) throw new Error("INVITE_EXPIRED");
+
+  // The invite is addressed to an email — require the authenticated user's
+  // email to match. Prevents a forwarded link being redeemable. If the
+  // caller's token has no email (e.g. phone-auth provider) we refuse
+  // outright rather than silently accept.
+  const inviteEmail = (inviteDoc.get("email") as string | undefined)?.toLowerCase() ?? null;
+  const userEmail = (user.email as string | undefined)?.toLowerCase() ?? null;
+  if (inviteEmail) {
+    if (!userEmail) throw new Error("INVITE_REQUIRES_EMAIL");
+    if (inviteEmail !== userEmail) throw new Error("INVITE_EMAIL_MISMATCH");
+  }
 
   const wsRef = inviteDoc.ref.parent.parent;
   if (!wsRef) throw new Error("INVITE_BROKEN");
@@ -1498,12 +1581,12 @@ export async function syncDriveFolder(
   if (!intSnap.exists || intSnap.get("status") !== "connected") {
     throw new Error("DRIVE_NOT_CONNECTED");
   }
-  const tokens = intSnap.get("oauthTokens") as {
-    access_token?: string | null;
-    refresh_token?: string | null;
-    expiry_date?: number | null;
-  } | undefined;
-  if (!tokens) throw new Error("DRIVE_TOKENS_MISSING");
+  const rawTokens = intSnap.get("oauthTokens") as
+    | Record<string, unknown>
+    | undefined;
+  if (!rawTokens) throw new Error("DRIVE_TOKENS_MISSING");
+  const { decryptDriveTokens } = await import("./token-crypto");
+  const tokens = decryptDriveTokens(rawTokens);
 
   const { driveForTokens } = await import("./google-drive");
   const drive = driveForTokens(tokens);
@@ -1582,13 +1665,13 @@ export async function syncDropboxFolder(
   if (!intSnap.exists || intSnap.get("status") !== "connected") {
     throw new Error("DROPBOX_NOT_CONNECTED");
   }
-  const tokens = intSnap.get("oauthTokens") as
-    | {
-        access_token: string;
-        refresh_token?: string | null;
-      }
+  const rawTokens = intSnap.get("oauthTokens") as
+    | Record<string, unknown>
     | undefined;
-  if (!tokens?.access_token) throw new Error("DROPBOX_TOKENS_MISSING");
+  if (!rawTokens) throw new Error("DROPBOX_TOKENS_MISSING");
+  const { decryptDropboxTokens } = await import("./token-crypto");
+  const tokens = decryptDropboxTokens(rawTokens);
+  if (!tokens.access_token) throw new Error("DROPBOX_TOKENS_MISSING");
 
   const { dropboxClient } = await import("./dropbox");
   const client = dropboxClient(tokens);

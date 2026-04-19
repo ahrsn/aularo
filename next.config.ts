@@ -16,19 +16,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: securityHeaders,
-      },
-      {
-        source: "/screen/:path*",
-        headers: [
-          ...securityHeaders.filter((h) => h.key !== "X-Frame-Options"),
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
-        ],
-      },
-    ];
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
 };
 

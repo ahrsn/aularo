@@ -28,6 +28,27 @@ export const PRICE_IDS = {
 
 export type StripePlan = keyof typeof PRICE_IDS;
 
+/**
+ * Map a Stripe price ID back to a plan. Throws if BOTH env vars are unset —
+ * that state would silently force the metadata-trust fallback in the webhook
+ * and must surface as a hard failure.
+ */
+export function planFromPriceId(
+  priceId: string | null | undefined,
+): StripePlan | null {
+  const studio = PRICE_IDS.studio();
+  const venue = PRICE_IDS.venue();
+  if (!studio && !venue) {
+    throw new Error(
+      "STRIPE_PRICE_STUDIO and STRIPE_PRICE_VENUE are both unset — refusing to trust subscription metadata",
+    );
+  }
+  if (!priceId) return null;
+  if (studio && priceId === studio) return "studio";
+  if (venue && priceId === venue) return "venue";
+  return null;
+}
+
 export function appBaseUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL ??

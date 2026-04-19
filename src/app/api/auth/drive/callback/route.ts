@@ -6,6 +6,7 @@ import {
   exchangeCodeForTokens,
   getAuthedEmail,
 } from "@/lib/google-drive";
+import { encryptDriveTokens } from "@/lib/token-crypto";
 
 /**
  * OAuth callback. Validates state, exchanges the authorization code for
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
           accountEmail: email,
           connectedAt: Date.now(),
           lastSyncAt: null,
-          oauthTokens: tokens,
+          oauthTokens: encryptDriveTokens(tokens),
         },
         { merge: true },
       );

@@ -59,39 +59,60 @@ export default function ScreenPage() {
 
   // Poll the server for the claim status. Server uses Admin SDK so the
   // kiosk doesn't need Firestore client permissions to the pairingCodes
-  // collection. Poll every 1.5s until claimed, then redirect.
+  // collection. Fast at first (user is actively entering the code) then
+  // backs off so a kiosk left on the pair screen overnight doesn't burn
+  // Firestore reads.
   useEffect(() => {
     if (!code) return;
-    let redirected = false;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const startedAt = Date.now();
+
+    function nextDelayMs(): number {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < 30_000) return 1_500; // first 30s: snappy
+      if (elapsed < 2 * 60_000) return 5_000; // next 90s: medium
+      return 15_000; // after 2min: long poll
+    }
 
     async function tickOnce() {
-      if (redirected) return;
+      if (cancelled) return;
       try {
-        const res = await fetch(
-          `/api/pair/check?code=${encodeURIComponent(code!.code)}`,
-          { cache: "no-store" },
-        );
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          claimed?: boolean;
-          workspaceId?: string | null;
-          displayId?: string | null;
-        };
-        if (data.claimed && data.workspaceId && data.displayId) {
-          redirected = true;
-          setPairedScreen(data.workspaceId, data.displayId);
-          window.location.href = `/screen/${data.displayId}`;
+        const params = new URLSearchParams({ code: code!.code });
+        if (screenId) params.set("screenId", screenId);
+        const res = await fetch(`/api/pair/check?${params.toString()}`, {
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = (await res.json()) as {
+            claimed?: boolean;
+            workspaceId?: string | null;
+            displayId?: string | null;
+            authSecret?: string | null;
+          };
+          if (data.claimed && data.workspaceId && data.displayId) {
+            cancelled = true;
+            setPairedScreen(
+              data.workspaceId,
+              data.displayId,
+              data.authSecret ?? null,
+            );
+            window.location.href = `/screen/${data.displayId}`;
+            return;
+          }
         }
       } catch (e) {
         console.warn("[screen] pair check failed:", e);
       }
+      if (!cancelled) timer = setTimeout(tickOnce, nextDelayMs());
     }
 
-    // Run immediately then on an interval.
     tickOnce();
-    const poll = setInterval(tickOnce, 1500);
-    return () => clearInterval(poll);
-  }, [code]);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [code, screenId]);
 
   if (!screenId || !code) {
     return (

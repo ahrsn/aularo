@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
-import { PRICE_IDS, stripe } from "@/lib/stripe";
+import { Timestamp } from "firebase-admin/firestore";
+import { planFromPriceId, stripe } from "@/lib/stripe";
 import { adminDb } from "@/lib/firebase-admin";
 import { displayLimitFor } from "@/lib/plan";
 import { WorkspacePlanSchema, type WorkspacePlan } from "@/lib/schema";
+
+const STRIPE_EVENT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
  * Stripe webhook — keeps each workspace's plan state in sync.
@@ -41,18 +44,37 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Idempotency: create the event record first. If it already exists, this is
-  // a retry and we short-circuit with 200.
+  // Idempotency via status transitions: processing → ok | failed.
+  // `create` throws if the doc exists: on that path we inspect status and
+  // either short-circuit (ok) or re-run (failed / stale processing).
   const eventRef = adminDb().collection("stripeEvents").doc(event.id);
+  const STALE_PROCESSING_MS = 5 * 60_000;
+  const ttlAt = Timestamp.fromMillis(Date.now() + STRIPE_EVENT_RETENTION_MS);
   try {
     await eventRef.create({
       type: event.type,
       receivedAt: new Date(),
+      status: "processing",
+      ttlAt,
     });
   } catch {
-    // Already processed — Stripe retry after a 500 we've since recovered from,
-    // or a duplicate delivery. Ack.
-    return NextResponse.json({ received: true, duplicate: true });
+    const existing = await eventRef.get();
+    const status = existing.get("status") as string | undefined;
+    const receivedAt = existing.get("receivedAt") as { toMillis?: () => number } | undefined;
+    const receivedMs = receivedAt?.toMillis?.() ?? 0;
+    if (status === "ok") {
+      return NextResponse.json({ received: true, duplicate: true });
+    }
+    // "failed" or "processing" older than STALE_PROCESSING_MS → re-run.
+    // Fresh "processing" means a concurrent delivery is in flight; 409 so
+    // Stripe retries after the in-flight run finishes.
+    if (status === "processing" && Date.now() - receivedMs < STALE_PROCESSING_MS) {
+      return NextResponse.json({ error: "in_progress" }, { status: 409 });
+    }
+    await eventRef.update({
+      status: "processing",
+      receivedAt: new Date(),
+    });
   }
 
   try {
@@ -62,25 +84,18 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("[stripe webhook]", event.id, event.type, message);
-    // Delete the dedupe record so Stripe's retry reprocesses cleanly.
-    await eventRef.delete().catch(() => {});
+    await eventRef
+      .update({
+        status: "failed",
+        failedAt: new Date(),
+        error: message.slice(0, 500),
+      })
+      .catch(() => {});
     return NextResponse.json(
       { error: "processing failed" },
       { status: 500 },
     );
   }
-}
-
-/**
- * Map a Stripe price ID back to the workspace plan. Prefer this over
- * subscription metadata which an operator or future self-serve flow could
- * drop or tamper with.
- */
-function planFromPriceId(priceId: string | null | undefined): WorkspacePlan | null {
-  if (!priceId) return null;
-  if (priceId === PRICE_IDS.studio()) return "studio";
-  if (priceId === PRICE_IDS.venue()) return "venue";
-  return null;
 }
 
 function firstPriceId(sub: Stripe.Subscription): string | null {
