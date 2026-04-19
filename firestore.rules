@@ -72,12 +72,11 @@ service cloud.firestore {
         allow write: if isOwner(wsId);
       }
 
-      // Slideshows — members always; public-preview slideshows also allow
-      // read-only anon access when publicSlug is set.
+      // Slideshows — members only. Public preview is served exclusively
+      // through the /s/[slug] server route using the Admin SDK, so client
+      // rules never need to grant anonymous reads.
       match /slideshows/{slideshowId} {
-        allow read: if isMember(wsId) ||
-          (resource.data.publicSlug != null &&
-           resource.data.publicSlug is string);
+        allow read: if isMember(wsId);
         allow create, update, delete: if canEdit(wsId);
       }
 
@@ -113,6 +112,16 @@ service cloud.firestore {
       match /integrations/{provider} {
         allow read, write: if isOwner(wsId);
       }
+    }
+
+    // ── Server-only collections ────────────────────────────────────────
+    // Rate-limit counters and Stripe event dedupe are written exclusively
+    // via the Admin SDK. Clients should never read or write them.
+    match /rateLimits/{id} {
+      allow read, write: if false;
+    }
+    match /stripeEvents/{id} {
+      allow read, write: if false;
     }
 
     // ── QR submissions (Phase 4.3) ─────────────────────────────────────
