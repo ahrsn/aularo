@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { Timestamp } from "firebase-admin/firestore";
-import { planFromPriceId, stripe } from "@/lib/stripe";
+import { planFromPriceId, stripe } from "@ee/billing/stripe";
 import { adminDb } from "@/lib/firebase-admin";
 import { displayLimitFor } from "@/lib/plan";
+import { isCommunity } from "@/lib/edition";
 import { WorkspacePlanSchema, type WorkspacePlan } from "@/lib/schema";
 
 const STRIPE_EVENT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
@@ -20,6 +21,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  // Billing is a cloud-only concern; the community edition has no Stripe.
+  if (isCommunity) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) {
     return NextResponse.json(
