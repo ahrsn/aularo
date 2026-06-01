@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import type { Workspace } from "@/lib/schema";
 import { TRIAL_DURATION_MS } from "@/lib/schema";
+import { isCommunity } from "@/lib/edition";
 import { LogoAvatar } from "./logo-avatar";
 import { BrandColorsInline } from "./brand-colors-inline";
 
@@ -69,18 +70,20 @@ export function IdentityHeader({
           />
         </div>
       </div>
-      <Link
-        href="/app/settings/billing"
-        className="inline-flex shrink-0 items-center gap-[6px] rounded-[10px] px-[10px] py-[5px] text-[12px] font-medium tracking-[-0.005em] transition-colors"
-        style={{
-          background: "#E8EDE6",
-          color: "#3B5A41",
-          border: "1px solid rgba(59,90,65,0.2)",
-        }}
-      >
-        {badgeText}
-        <Icon name="arrow-up-right" size={12} />
-      </Link>
+      {!isCommunity && (
+        <Link
+          href="/app/settings/billing"
+          className="inline-flex shrink-0 items-center gap-[6px] rounded-[10px] px-[10px] py-[5px] text-[12px] font-medium tracking-[-0.005em] transition-colors"
+          style={{
+            background: "#E8EDE6",
+            color: "#3B5A41",
+            border: "1px solid rgba(59,90,65,0.2)",
+          }}
+        >
+          {badgeText}
+          <Icon name="arrow-up-right" size={12} />
+        </Link>
+      )}
     </section>
   );
 }
