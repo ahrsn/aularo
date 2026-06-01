@@ -1,9 +1,16 @@
 import type { WorkspacePlan } from "./schema";
+import { isCommunity } from "./edition";
 
 /**
  * Single source of truth for tier entitlements. Server actions, billing UI,
  * landing pricing, and in-app gates all read from this file so features stay
  * in lockstep with what's sold on the marketing site.
+ *
+ * Edition boundary: in the self-hosted community edition every capability is
+ * granted and every limit is lifted. The operator runs on their own database
+ * and object storage, so the caps below — which exist to meter Clarra's hosted
+ * cloud — do not apply. All 21 gate call sites stay identical across editions;
+ * the only thing that changes is what these functions return, right here.
  */
 
 export type Capability =
@@ -59,7 +66,11 @@ const CAP_REQUIRES: Record<Capability, WorkspacePlan> = {
 };
 
 export function can(plan: WorkspacePlan, cap: Capability): boolean {
-  return CAPS[plan].has(cap);
+  if (isCommunity) return true;
+  // `?? CAPS.free` keeps this a total function: a malformed/legacy plan string
+  // (the read path at /screen casts unvalidated Firestore data) falls back to
+  // the most restrictive tier instead of throwing on `CAPS[unknown].has`.
+  return (CAPS[plan] ?? CAPS.free).has(cap);
 }
 
 /**
@@ -92,6 +103,7 @@ export class PlanError extends Error {
 }
 
 export function assertCan(plan: WorkspacePlan, cap: Capability): void {
+  if (isCommunity) return;
   if (can(plan, cap)) return;
   const required = CAP_REQUIRES[cap];
   throw new PlanError({
@@ -106,6 +118,7 @@ export function assertSlideshowLimit(
   plan: WorkspacePlan,
   currentCount: number,
 ): void {
+  if (isCommunity) return;
   const limit = PLAN_LIMITS[plan].slideshows;
   if (currentCount < limit) return;
   throw new PlanError({
@@ -122,6 +135,7 @@ export function assertStorageRoom(
   currentBytes: number,
   incomingBytes: number,
 ): void {
+  if (isCommunity) return;
   const cap = PLAN_LIMITS[plan].storageBytes;
   if (currentBytes + incomingBytes <= cap) return;
   throw new PlanError({
@@ -134,6 +148,7 @@ export function assertStorageRoom(
 }
 
 export function displayLimitFor(plan: WorkspacePlan): number {
+  if (isCommunity) return 9999;
   const n = PLAN_LIMITS[plan].displays;
   return Number.isFinite(n) ? n : 9999;
 }

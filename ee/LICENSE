@@ -1,0 +1,26 @@
+Clarra Commercial License
+==========================
+
+Copyright (c) Chaos Digital Software. All rights reserved.
+
+This directory ("ee/") and all code, configuration, and assets within it are
+NOT open source and are NOT covered by the GNU Affero General Public License
+that governs the rest of this repository (see /LICENSE).
+
+The contents of ee/ constitute the commercial "Cloud Edition" of Clarra and are
+the proprietary and confidential property of Chaos Digital Software.
+
+You MAY view this code for reference and transparency.
+
+You MAY NOT, without a separate written commercial agreement with
+Chaos Digital Software:
+
+  - use, run, or deploy this code in any production or hosted environment;
+  - copy, modify, or create derivative works from it;
+  - redistribute it, in source or compiled form, in whole or in part;
+  - remove or alter this notice.
+
+Building the open-source Community Edition does not require this directory.
+A community build (NEXT_PUBLIC_EDITION=community) never executes code in ee/.
+
+For commercial licensing inquiries, contact Chaos Digital Software.

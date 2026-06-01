@@ -6,6 +6,8 @@ import { firestore } from "@/lib/firebase-client";
 import { getDisplayAuthSecret, signHeartbeatClient } from "@/lib/screen-id";
 import { LiveScreen } from "@/components/show/live-screen";
 import { IdleScreen } from "@/components/show/slides";
+import { can } from "@/lib/plan";
+import type { WorkspacePlan } from "@/lib/schema";
 
 type DisplayDoc = {
   id: string;
@@ -153,7 +155,7 @@ export default function LiveDisplayPage({
         captions: slideshow.captions,
       }}
       label={display.name?.toUpperCase() ?? ""}
-      showWatermark={workspace?.plan === "free"}
+      showWatermark={!can((workspace?.plan ?? "free") as WorkspacePlan, "no_watermark")}
     />
   );
 }

@@ -4,12 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
+import { isCommunity } from "@/lib/edition";
 
 // Order + icons mirror the design's SETTINGS_SECTIONS in dash-settings.jsx.
+// Billing is cloud-only; the community edition drops the tab entirely.
 const tabs = [
   { href: "/app/settings/workspace", icon: "buildings", label: "Workspace" },
   { href: "/app/settings/integrations", icon: "plugs", label: "Connections" },
-  { href: "/app/settings/billing", icon: "receipt", label: "Billing" },
+  ...(isCommunity
+    ? []
+    : [{ href: "/app/settings/billing", icon: "receipt", label: "Billing" }]),
 ];
 
 export function SettingsNav() {

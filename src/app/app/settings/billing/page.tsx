@@ -3,11 +3,13 @@ import {
   listMediaAssets,
   listMembers,
 } from "@/lib/slideshow-data";
+import { notFound } from "next/navigation";
 import { requireActiveWorkspace } from "@/lib/workspace";
 import type { Workspace } from "@/lib/schema";
 import { TRIAL_DURATION_MS } from "@/lib/schema";
 import { PortalButton, UpgradeButton } from "./upgrade-button";
 import { PLAN_LIMITS } from "@/lib/plan";
+import { isCommunity } from "@/lib/edition";
 
 type PlanMeta = {
   label: string;
@@ -51,6 +53,8 @@ function formatBytes(bytes: number): string {
 }
 
 export default async function BillingPage() {
+  // No billing surface in the self-hosted community edition.
+  if (isCommunity) notFound();
   const { workspaceId, workspace } = await requireActiveWorkspace();
   const ws = workspace as unknown as Workspace;
   const [displays, members, media] = await Promise.all([

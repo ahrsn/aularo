@@ -8,7 +8,8 @@ import { getWorkspaceBySlug, requireActiveWorkspace, workspaceRef } from "./work
 import { requireUser } from "./auth-session";
 import { adminAuth, adminDb } from "./firebase-admin";
 import { createSignedUploadUrl, r2PublicUrl } from "./r2";
-import { PRICE_IDS, appBaseUrl, stripe, type StripePlan } from "./stripe";
+import { PRICE_IDS, appBaseUrl, stripe, type StripePlan } from "@ee/billing/stripe";
+import { isCommunity } from "./edition";
 import {
   ShortCodeSchema,
   SlideKindSchema,
@@ -463,8 +464,11 @@ export async function claimPairingCode(
     if ((data.expiresAt as number) < Date.now()) throw new Error("EXPIRED");
 
     const wsSnap = await tx.get(wsRef);
-    const displayLimit =
-      (wsSnap.get("displayLimit") as number | undefined) ?? 1;
+    // Community edition is uncapped (operator owns the infrastructure). In
+    // cloud, enforce the persisted per-workspace limit exactly as before.
+    const displayLimit = isCommunity
+      ? Infinity
+      : ((wsSnap.get("displayLimit") as number | undefined) ?? 1);
     const currentCount =
       (wsSnap.get("displayCount") as number | undefined) ?? seedCount;
     if (currentCount >= displayLimit) {
@@ -606,8 +610,10 @@ export async function createPreassignedDisplay(
         // Limit check is inside the tx — two concurrent calls can't both
         // squeeze past the cap.
         const wsSnap = await tx.get(wsRef);
-        const displayLimit =
-          (wsSnap.get("displayLimit") as number | undefined) ?? 1;
+        // Community edition is uncapped; cloud enforces the persisted limit.
+        const displayLimit = isCommunity
+          ? Infinity
+          : ((wsSnap.get("displayLimit") as number | undefined) ?? 1);
         const currentCount =
           (wsSnap.get("displayCount") as number | undefined) ?? seedCount;
         if (currentCount >= displayLimit) {
@@ -1498,6 +1504,7 @@ const checkoutSchema = z.object({
 export async function createCheckoutSession(
   input: z.infer<typeof checkoutSchema>,
 ) {
+  if (isCommunity) throw new Error("BILLING_UNAVAILABLE");
   const { plan, displays } = checkoutSchema.parse(input);
   const { workspaceId, uid, role } = await requireActiveWorkspace();
   if (role !== "owner") throw new Error("ONLY_OWNER");
@@ -1540,6 +1547,7 @@ export async function createCheckoutSession(
 }
 
 export async function createPortalSession() {
+  if (isCommunity) throw new Error("BILLING_UNAVAILABLE");
   const { workspaceId, role } = await requireActiveWorkspace();
   if (role !== "owner") throw new Error("ONLY_OWNER");
   const wsSnap = await workspaceRef(workspaceId).get();
