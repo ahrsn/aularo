@@ -1,12 +1,12 @@
 /**
- * Edition flag — the single switch between Clarra's two builds.
+ * Edition flag — the single switch between Aularo's two builds.
  *
  * - `cloud`      — the managed, multi-tenant product: Stripe billing, plan
  *                  tiers (free/studio/venue), and enforced per-plan limits.
  * - `community`  — the self-hosted AGPLv3 build: every feature unlocked, no
  *                  billing, and no plan limits. The operator owns their own
  *                  infrastructure (database, object storage), so storage and
- *                  display caps that exist to protect Clarra's cloud do not
+ *                  display caps that exist to protect Aularo's cloud do not
  *                  apply here.
  *
  * `NEXT_PUBLIC_EDITION` is inlined into the bundle at build time, so this is a

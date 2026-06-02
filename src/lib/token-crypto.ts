@@ -41,7 +41,7 @@ function getKey(): Buffer {
   // Deterministic stretch of passphrase → 32-byte key. Salt is a static
   // application marker rather than per-secret; fine for this use case
   // because the passphrase itself is the strong secret.
-  return scryptSync(raw, "clarra-token-envelope", 32);
+  return scryptSync(raw, "aularo-token-envelope", 32);
 }
 
 export function encryptToken(plaintext: string): string {

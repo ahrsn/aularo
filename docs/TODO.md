@@ -1,4 +1,4 @@
-# Clarra — Ship-readiness TODO
+# Aularo — Ship-readiness TODO
 
 Rolling backlog of work remaining after the security audit (Phases 1 + 2 shipped). Organized by phase. Within a phase, order roughly matches recommended sequencing.
 

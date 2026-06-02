@@ -1,5 +1,6 @@
 import { Icon } from "@/components/ui/icon";
 import { Wordmark } from "@/components/ui/wordmark";
+import { DASHBOARD_DISPLAY_URL } from "@/lib/site";
 
 /**
  * Miniature dashboard still used inside the hero. Every pixel intentional —
@@ -140,7 +141,7 @@ export function ProductStill() {
             letterSpacing: "0.02em",
           }}
         >
-          clarra.show / app / library
+          {DASHBOARD_DISPLAY_URL} / app / library
         </div>
       </div>
 

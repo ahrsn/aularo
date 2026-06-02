@@ -1,3 +1,4 @@
+import { SITE_NAME } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 type WordmarkProps = {
@@ -8,8 +9,8 @@ type WordmarkProps = {
 };
 
 /**
- * Clarra wordmark — three overlapping parallelograms + serif "Clarra".
- * Inherits currentColor. Ported from design bundle primitives.jsx.
+ * Aularo wordmark — original mark + serif name.
+ * Inherits currentColor.
  */
 export function Wordmark({
   size = 22,
@@ -45,7 +46,7 @@ export function Wordmark({
             fontVariationSettings: "'opsz' 48",
           }}
         >
-          Clarra
+          {SITE_NAME}
         </span>
       )}
     </span>

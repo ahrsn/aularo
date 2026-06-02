@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Wordmark } from "@/components/ui/wordmark";
+import { SCREEN_DISPLAY_URL, SITE_NAME } from "@/lib/site";
 
 const cols: Array<{ title: string; items: string[] }> = [
   { title: "Product", items: ["Features", "Pricing", "Changelog", "Status"] },
   { title: "Use Cases", items: ["Galleries", "Hotels", "Events", "Kiosks"] },
   { title: "Company", items: ["About", "Customers", "Writing", "Careers"] },
-  { title: "Support", items: ["Docs", "clarra.show", "Contact", "Security"] },
+  { title: "Support", items: ["Docs", SCREEN_DISPLAY_URL, "Contact", "Security"] },
 ];
 
 export function CTAFooter() {
@@ -50,22 +51,25 @@ export function CTAFooter() {
                   iconRight="arrow-right"
                   className="w-full justify-center sm:w-auto"
                 >
-                  Start Free Trial
+                  Start free
                 </Button>
               </Link>
-              <Button
-                variant="onDarkGhost"
-                size="lg"
-                className="w-full justify-center sm:w-auto"
-              >
-                Book a Walkthrough
-              </Button>
+              <Link href="#open-source" className="w-full sm:w-auto">
+                <Button
+                  variant="onDarkGhost"
+                  size="lg"
+                  icon="terminal-window"
+                  className="w-full justify-center sm:w-auto"
+                >
+                  Self-host it
+                </Button>
+              </Link>
             </div>
             <div
               className="text-[12.5px] tracking-[-0.005em]"
               style={{ color: "rgba(245,241,232,0.55)" }}
             >
-              No credit card. Upgrade when you&rsquo;re ready.
+              No credit card. Or self-host it &mdash; it&rsquo;s open source.
             </div>
           </div>
         </div>
@@ -125,7 +129,7 @@ export function CTAFooter() {
             letterSpacing: "-0.005em",
           }}
         >
-          <div>© Clarra · Raleigh, NC.</div>
+          <div>© {SITE_NAME} · Raleigh, NC.</div>
           <div className="flex items-center gap-5">
             <a href="#" className="text-inherit no-underline">
               Privacy

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { adminDb } from "@/lib/firebase-admin";
 import { Wordmark } from "@/components/ui/wordmark";
 import { SubmitForm } from "./submit-form";
+import { SCREEN_DISPLAY_URL, SITE_NAME } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,7 +79,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           {children}
         </div>
         <div className="mt-6 text-center text-[11px] tracking-[-0.005em] text-muted-2">
-          Powered by Clarra · clarra.show
+          Powered by {SITE_NAME} · {SCREEN_DISPLAY_URL}
         </div>
       </div>
     </div>

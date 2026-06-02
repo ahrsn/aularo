@@ -231,7 +231,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
           opacity: 0.35,
           animation: paused
             ? "none"
-            : `clarra-toast-progress ${toast.duration}ms linear forwards`,
+            : `aularo-toast-progress ${toast.duration}ms linear forwards`,
         }}
       />
     </div>

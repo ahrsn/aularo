@@ -165,7 +165,7 @@ function VersionPill({ version }: { version: string }) {
     <button
       type="button"
       onClick={() =>
-        window.dispatchEvent(new CustomEvent("clarra:open-changelog"))
+        window.dispatchEvent(new CustomEvent("aularo:open-changelog"))
       }
       className="mx-2 mb-[6px] flex w-[calc(100%-16px)] items-center justify-between rounded-[4px] px-[10px] py-[6px] text-left transition-colors duration-quiet ease-quiet hover:bg-[rgba(25,35,26,0.04)]"
     >
@@ -296,4 +296,3 @@ export function Sidebar({
     </aside>
   );
 }
-

@@ -17,7 +17,7 @@ export function LogoLoader({
     <div
       role="status"
       aria-label={label}
-      className={cn("clarra-logo-loader inline-block", className)}
+      className={cn("aularo-logo-loader inline-block", className)}
       style={{ width: size, height: size }}
     >
       <svg

@@ -1859,7 +1859,7 @@ function UploadingTile({ file }: { file: UploadingFile }) {
       aria-label={`Uploading ${file.name}`}
     >
       <div
-        className="clarra-shimmer relative flex items-center justify-center"
+        className="aularo-shimmer relative flex items-center justify-center"
         style={{ aspectRatio: "1 / 1" }}
       >
         <div className="flex flex-col items-center gap-2">
@@ -1885,7 +1885,7 @@ function Spinner() {
   return (
     <div
       aria-hidden
-      className="clarra-spin"
+      className="aularo-spin"
       style={{
         width: 22,
         height: 22,

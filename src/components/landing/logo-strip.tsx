@@ -9,24 +9,21 @@ const logos = [
 
 export function LogoStrip() {
   return (
-    <section className="border-b border-t border-line px-5 py-10 md:px-8">
-      <div
-        className="mx-auto flex flex-col gap-6"
-        style={{ maxWidth: 1120 }}
-      >
-        <div className="text-label text-center">
+    <section className="border-b border-t border-line px-5 py-12 md:px-8">
+      <div className="mx-auto flex flex-col gap-8" style={{ maxWidth: 1120 }}>
+        <p className="text-eyebrow text-muted-2 text-center">
           Running in galleries, lobbies, and venues everywhere
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-5 md:justify-between">
+        </p>
+        <div className="flex flex-wrap items-baseline justify-center gap-x-10 gap-y-6 md:justify-between">
           {logos.map((l) => (
-            <div
+            <span
               key={l.name}
-              className="text-ink"
+              className="text-ink transition-opacity duration-quiet hover:opacity-100"
               style={{
                 fontFamily: l.family,
                 fontWeight: l.weight,
-                fontSize: 18,
-                opacity: 0.72,
+                fontSize: 17,
+                opacity: 0.48,
                 letterSpacing: l.track ?? "-0.01em",
                 fontStyle: l.italic ? "italic" : "normal",
                 fontVariationSettings: l.family.includes("newsreader")
@@ -35,7 +32,7 @@ export function LogoStrip() {
               }}
             >
               {l.name}
-            </div>
+            </span>
           ))}
         </div>
       </div>

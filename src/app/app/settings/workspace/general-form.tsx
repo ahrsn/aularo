@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateWorkspaceIdentity } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
+import { SCREEN_DISPLAY_URL } from "@/lib/site";
 
 const TIMEZONES = [
   "America/Chicago",
@@ -102,7 +103,7 @@ export function GeneralForm({
             className="border-r border-line font-mono text-muted"
             style={{ fontSize: 12.5, padding: "8px 10px" }}
           >
-            clarra.show /
+            {SCREEN_DISPLAY_URL} /
           </span>
           <input
             value={slug}

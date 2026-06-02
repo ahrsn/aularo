@@ -23,6 +23,7 @@ import {
 import { humanizeError, toErrorState, type ErrorState } from "@/lib/errors";
 import { useToast } from "@/components/ui/toast";
 import type { Display } from "@/lib/schema";
+import { claimUrl as buildClaimUrl, SCREEN_DISPLAY_URL, SITE_NAME } from "@/lib/site";
 
 type StatusFilter = "all" | "online" | "offline" | "idle";
 
@@ -168,7 +169,7 @@ export function DisplaysClient({
                 No displays paired yet.
               </div>
               <div className="mt-1 text-[13px] tracking-[-0.005em] text-muted">
-                Open clarra.show/screen on any browser and pair it with a code.
+                Open {SCREEN_DISPLAY_URL} on any browser and pair it with a code.
               </div>
               <div className="mt-6 flex justify-center">
                 <Button
@@ -291,7 +292,7 @@ function DisplayRow({
 
   function copyClaimUrl() {
     if (!workspaceSlug || !d.shortCode) return;
-    const url = `${window.location.origin}/d/${workspaceSlug}/${d.shortCode}`;
+    const url = buildClaimUrl(workspaceSlug, d.shortCode);
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -342,7 +343,7 @@ function DisplayRow({
               disabled={!workspaceSlug}
               title={
                 workspaceSlug
-                  ? `Copy ${window.location.origin}/d/${workspaceSlug}/${d.shortCode}`
+                  ? `Copy ${buildClaimUrl(workspaceSlug, d.shortCode)}`
                   : "Set a workspace slug first"
               }
               className="cursor-pointer rounded-[3px] border border-line bg-paper px-[6px] py-[1px] font-mono text-[10.5px] uppercase tracking-[0.06em] text-ink hover:bg-[rgba(25,35,26,0.06)] disabled:cursor-default disabled:opacity-60"
@@ -786,22 +787,22 @@ const KIOSK_RECS: {
 }[] = [
   {
     name: "Fire TV Stick 4K Max",
-    tagline: "Cheapest reliable kiosk. Silk browser runs Clarra well.",
-    url: "https://www.amazon.com/dp/B0BW1YXCD6?tag=clarra-20",
+    tagline: `Cheapest reliable kiosk. Silk browser runs ${SITE_NAME} well.`,
+    url: "https://www.amazon.com/dp/B0BW1YXCD6?tag=aularo-20",
     price: "60",
     icon: "device-tablet-speaker",
   },
   {
     name: "Mac mini (M4)",
     tagline: "Silent, 4K-capable, runs 24/7 on Safari or Chrome.",
-    url: "https://www.amazon.com/dp/B0DLBHB7X7?tag=clarra-20",
+    url: "https://www.amazon.com/dp/B0DLBHB7X7?tag=aularo-20",
     price: "599",
     icon: "desktop",
   },
   {
     name: "VESA mount bundle",
     tagline: "Hides the mini behind any VESA-compatible TV.",
-    url: "https://www.amazon.com/dp/B09PLHL2TY?tag=clarra-20",
+    url: "https://www.amazon.com/dp/B09PLHL2TY?tag=aularo-20",
     price: "25",
     icon: "push-pin",
   },
@@ -858,7 +859,7 @@ function KioskKit() {
           What we put on our walls.
         </div>
         <div className="mt-[6px] text-[11.5px] leading-[1.5] tracking-[-0.005em] text-muted">
-          Hardware we&rsquo;ve tested and trust for Clarra screens.
+          Hardware we&rsquo;ve tested and trust for {SITE_NAME} screens.
         </div>
       </div>
 
@@ -953,7 +954,7 @@ function KioskKit() {
             style={{ color: "var(--muted-2)", flexShrink: 0 }}
           />
           <span>
-            Affiliate links — no cost to you, small cut to Clarra.
+            Affiliate links — no cost to you, small cut to {SITE_NAME}.
           </span>
         </div>
       </div>
@@ -1078,7 +1079,7 @@ function PreassignModal({
 
   function copyUrl() {
     if (!created) return;
-    const url = `${window.location.origin}/d/${created.workspaceSlug}/${created.shortCode}`;
+    const url = buildClaimUrl(created.workspaceSlug, created.shortCode);
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -1086,7 +1087,7 @@ function PreassignModal({
   }
 
   const claimUrl = created
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/d/${created.workspaceSlug}/${created.shortCode}`
+    ? buildClaimUrl(created.workspaceSlug, created.shortCode)
     : null;
 
   return (
@@ -1474,7 +1475,7 @@ function RotateCodeModal({
             </div>
             {workspaceSlug && cached.shortCode && (
               <div className="truncate font-mono text-[11px] tracking-[0.04em] text-muted">
-                {typeof window !== "undefined" ? window.location.host : ""}/d/{workspaceSlug}/{cached.shortCode}
+                {buildClaimUrl(workspaceSlug, cached.shortCode).replace(/^https?:\/\//, "")}
               </div>
             )}
           </div>

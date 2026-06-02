@@ -1,10 +1,10 @@
-// Clarra kiosk service worker.
+// Aularo kiosk service worker.
 // Caches the /screen app shell + the most recent slideshow assets so the
 // display keeps playing through short wifi drops. Scoped to /screen — the
 // rest of the app is untouched.
 
-const CACHE = "clarra-screen-v1";
-const APP_SHELL = ["/screen", "/icon.svg", "/manifest.webmanifest"];
+const CACHE = "aularo-screen-v1";
+const APP_SHELL = ["/screen", "/icon-192.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

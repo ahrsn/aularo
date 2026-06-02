@@ -7,9 +7,9 @@ import {
   listPendingSubmissions,
 } from "@/lib/slideshow-data";
 import { BuilderClient } from "./builder-client";
+import { APP_URL } from "@/lib/site";
 
-const APP_BASE =
-  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const APP_BASE = APP_URL;
 
 export default async function SlideshowPage({
   params,

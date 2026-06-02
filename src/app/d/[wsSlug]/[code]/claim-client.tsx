@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getScreenId, setPairedScreen } from "@/lib/screen-id";
 import { useToast } from "@/components/ui/toast";
+import { SITE_NAME } from "@/lib/site";
 
 type Phase = "claiming" | "error";
 
@@ -48,7 +49,7 @@ export function ClaimClient({ wsSlug, code }: { wsSlug: string; code: string }) 
       } catch {
         setErrorCode("NETWORK");
         setPhase("error");
-        toast.error(new Error("Couldn't reach Clarra. Check the connection and try again."), "Connection failed.");
+        toast.error(new Error(`Couldn't reach ${SITE_NAME}. Check the connection and try again.`), "Connection failed.");
       }
     })();
   }, [wsSlug, code, toast]);
@@ -115,7 +116,7 @@ function errorMessageFor(code: string | null): string {
     case "DISPLAY_IN_USE":
       return "Another screen is already paired here. Ask your admin to free it up.";
     case "NETWORK":
-      return "Couldn't reach Clarra. Check the connection and try again.";
+      return `Couldn't reach ${SITE_NAME}. Check the connection and try again.`;
     default:
       return "Something went wrong.";
   }

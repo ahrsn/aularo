@@ -141,7 +141,7 @@ export default function SignupPage() {
           {busy ? (
             <>
               <span
-                className="clarra-spin inline-block rounded-full border-2 border-[rgba(245,241,232,0.3)] border-t-paper"
+                className="aularo-spin inline-block rounded-full border-2 border-[rgba(245,241,232,0.3)] border-t-paper"
                 style={{ width: 15, height: 15 }}
                 aria-hidden
               />

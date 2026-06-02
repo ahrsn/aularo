@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { adminDb } from "@/lib/firebase-admin";
 import { PublicScreen } from "./public-screen";
+import { SITE_NAME } from "@/lib/site";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,11 +53,11 @@ export async function generateMetadata({ params }: PageProps) {
     .where("publicSlug", "==", slug)
     .limit(1)
     .get();
-  if (snap.empty) return { title: "Clarra preview" };
+  if (snap.empty) return { title: `${SITE_NAME} preview` };
   const data = snap.docs[0].data();
   const name = (data.name as string) ?? "Preview";
   return {
-    title: `${name} · Clarra preview`,
+    title: `${name} · ${SITE_NAME} preview`,
     robots: { index: false, follow: false },
   };
 }

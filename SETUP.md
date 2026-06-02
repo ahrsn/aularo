@@ -1,13 +1,13 @@
-# Clarra — local setup
+# Aularo — local setup
 
 One-time setup to get the dev server running end-to-end (auth + Firestore + pair flow).
 
 ## 1. Create a Firebase project
 
-1. Go to <https://console.firebase.google.com> → **Add project**. Name it `clarra-dev` (or whatever).
+1. Go to <https://console.firebase.google.com> → **Add project**. Name it `aularo-dev` (or whatever).
 2. **Authentication → Get started** → enable **Google** and **Email/Password** providers.
 3. **Firestore Database → Create database** → start in **Production mode**, pick the region closest to you.
-4. **Project Settings** (gear icon top-left) → **General** tab → **Your apps** → **Add app → Web** (`</>`). Name it `clarra-web`. Copy the `firebaseConfig` object values.
+4. **Project Settings** (gear icon top-left) → **General** tab → **Your apps** → **Add app → Web** (`</>`). Name it `aularo-web`. Copy the `firebaseConfig` object values.
 
 ## 2. Generate a service-account key (server-side)
 
@@ -15,7 +15,7 @@ One-time setup to get the dev server running end-to-end (auth + Firestore + pair
 2. You'll paste the *entire file contents as one line* into `.env.local` below.
 
    ```bash
-   cat ~/Downloads/clarra-dev-*.json | tr -d '\n' | pbcopy
+   cat ~/Downloads/aularo-dev-*.json | tr -d '\n' | pbcopy
    ```
 
 ## 3. Fill `.env.local`
@@ -32,6 +32,10 @@ NEXT_PUBLIC_FIREBASE_APP_ID=<appId>
 
 FIREBASE_SERVICE_ACCOUNT=<paste the single-line JSON from step 2>
 FIREBASE_SESSION_SECRET=<run: openssl rand -base64 48>
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_SCREEN_URL=http://localhost:3000
+NEXT_PUBLIC_DASHBOARD_URL=http://localhost:3000
 ```
 
 Leave `R2_*` and `STRIPE_*` blank for now — they're wired in Phase 3 and 2.3.
@@ -56,7 +60,7 @@ In Firebase Console → **Authentication → Settings → Authorized domains** a
 ## 6. Run it
 
 ```bash
-cd "/Users/ahmaadharrison/Chaos Digital Software/clarra"
+cd "/Users/ahmaadharrison/Chaos Digital Software/[01] Live/clarra"
 pnpm dev
 ```
 

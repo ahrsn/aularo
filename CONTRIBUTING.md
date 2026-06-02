@@ -1,6 +1,6 @@
-# Contributing to Clarra
+# Contributing to Aularo
 
-Thanks for your interest in Clarra. This repository holds both the open-source
+Thanks for your interest in Aularo, formerly Clarra. This repository holds both the open-source
 **Community Edition** (the `src/` tree, AGPLv3) and the proprietary **Cloud
 Edition** layer (`ee/`, commercial license). Contributions are welcome to the
 Community Edition.
@@ -10,7 +10,7 @@ Community Edition.
 Before we can merge your first contribution, you must sign our **Contributor
 License Agreement (CLA)**. A bot will prompt you on your first pull request.
 
-Why: Clarra is dual-licensed (AGPLv3 community core + a commercial Cloud
+Why: Aularo is dual-licensed (AGPLv3 community core + a commercial Cloud
 Edition). The CLA grants Chaos Digital Software the rights needed to include
 your contribution in both editions. Without it we cannot legally accept the
 change. This is standard practice for open-core projects (it's the same model

@@ -1,4 +1,4 @@
-# Clarra
+# Aularo
 
 [![Version](https://img.shields.io/badge/version-1.0.0--beta.2-111827)](./CHANGELOG.md)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2.4-000000?logo=nextdotjs)](./package.json)
@@ -7,13 +7,13 @@
 [![Tests](https://img.shields.io/badge/tests-Vitest-6e9f18?logo=vitest&logoColor=fff)](./vitest.config.ts)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-2b6cb0)](./LICENSE)
 
-Clarra is a digital signage platform for events, venues, churches, galleries, retail spaces, and other screen-driven environments. Teams build slideshows, manage media, pair physical displays, schedule playback, accept guest submissions, and monitor screen health from one workspace.
+Aularo, formerly Clarra, is a digital signage platform for events, venues, churches, galleries, retail spaces, and other screen-driven environments. Teams build slideshows, manage media, pair physical displays, schedule playback, accept guest submissions, and monitor screen health from one workspace.
 
 > Current release: `1.0.0-beta.2`
 
 ## Editions
 
-Clarra ships in two editions from this one repository:
+Aularo ships in two editions from this one repository:
 
 | | **Community Edition** | **Cloud Edition** |
 |---|---|---|
@@ -112,6 +112,10 @@ openssl rand -base64 48   # FIREBASE_SESSION_SECRET
 
 Full setup details live in [SETUP.md](./SETUP.md).
 
+Production Cloud uses `NEXT_PUBLIC_APP_URL=https://aularo.com` for the public site
+and `NEXT_PUBLIC_SCREEN_URL=https://screen.aularo.com` plus
+`NEXT_PUBLIC_DASHBOARD_URL=https://screen.aularo.com` for TVs and laptop control.
+
 ### Run Locally
 
 ```bash
@@ -159,7 +163,7 @@ src/
     edition.ts               cloud | community build flag
     plan.ts                  Entitlement seam (gates + limits)
     data/                    DataStore / Realtime / Auth port interfaces (design)
-  middleware.ts              Session and route protection
+  proxy.ts                   Host routing, session shortcut, and route protection
 ee/                          Commercial Cloud Edition layer (proprietary)
   billing/                   Stripe client + checkout/portal helpers
 docs/
@@ -172,7 +176,7 @@ scripts/
 
 ## Architecture Notes
 
-Clarra is a Next.js app backed by Firebase Auth and Firestore. The dashboard uses server components and server actions for authenticated workspace workflows. Physical displays run browser sessions at `/screen` and receive pairing/playback updates through real-time listeners.
+Aularo is a Next.js app backed by Firebase Auth and Firestore. The dashboard uses server components and server actions for authenticated workspace workflows. Physical displays run browser sessions at `/screen` and receive pairing/playback updates through real-time listeners.
 
 Core conventions:
 
@@ -196,7 +200,7 @@ Read [docs/architecture.md](./docs/architecture.md) before changing data model, 
 
 ## License
 
-Clarra is **open core**:
+Aularo is **open core**:
 
 - The Community Edition (everything outside `ee/`) is licensed under the
   **GNU Affero General Public License v3.0** — see [LICENSE](./LICENSE). If you

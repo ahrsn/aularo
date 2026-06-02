@@ -6,9 +6,11 @@ import { Icon } from "@/components/ui/icon";
 import { useMountTransition } from "@/components/ui/motion";
 import { acknowledgeChangelog } from "@/lib/actions";
 import type { ChangelogRelease } from "@/lib/changelog";
+import { SITE_NAME } from "@/lib/site";
 
-const LOCAL_KEY = "clarra-last-seen-changelog";
-const SUPPRESS_KEY = "clarra-suppress-changelog";
+const LOCAL_KEY = "aularo-last-seen-changelog";
+const SUPPRESS_KEY = "aularo-suppress-changelog";
+const OPEN_CHANGELOG_EVENT = "aularo:open-changelog";
 
 type Props = {
   release: ChangelogRelease;
@@ -46,8 +48,8 @@ export function WhatsNewModal({ release, lastSeenVersion }: Props) {
     function onTrigger() {
       setOpen(true);
     }
-    window.addEventListener("clarra:open-changelog", onTrigger);
-    return () => window.removeEventListener("clarra:open-changelog", onTrigger);
+    window.addEventListener(OPEN_CHANGELOG_EVENT, onTrigger);
+    return () => window.removeEventListener(OPEN_CHANGELOG_EVENT, onTrigger);
   }, []);
 
   useEffect(() => {
@@ -119,7 +121,7 @@ export function WhatsNewModal({ release, lastSeenVersion }: Props) {
                 }}
               >
                 <Icon name="sparkle" size={11} />
-                New in Clarra
+                New in {SITE_NAME}
               </span>
               <span className="text-[11px] tracking-[-0.005em] text-muted-2">
                 v{release.version} · {formatDate(release.date)}

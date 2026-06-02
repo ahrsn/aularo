@@ -1,4 +1,4 @@
-# Clarra — Architecture
+# Aularo — Architecture
 
 **Version:** 1.0.0-beta.1
 **Last updated:** 2026-04-18
@@ -7,7 +7,7 @@
 
 ## Overview
 
-Clarra is a Next.js 16 App Router application deployed on Vercel. It uses Firebase for auth and real-time data, Cloudflare R2 for binary asset storage, and Stripe for billing. The physical display (TV/kiosk) runs a browser pointed at `/screen` and receives slideshow updates via Firestore `onSnapshot`.
+Aularo, formerly Clarra, is a Next.js 16 App Router application deployed on Vercel. It uses Firebase for auth and real-time data, Cloudflare R2 for binary asset storage, and Stripe for billing. The public site lives at `aularo.com`; the physical display (TV/kiosk) and default laptop dashboard/control flow run at `screen.aularo.com`.
 
 ```
 Browser (Dashboard)          Browser (TV / Kiosk)
@@ -103,7 +103,7 @@ Media assets are stored in Cloudflare R2. Upload flow:
 3. Server action creates the `MediaAsset` Firestore document with `status: "pending"`.
 4. A background step (or webhook) marks the asset `ready` once the R2 write is confirmed.
 
-R2 credentials: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`.
+R2 credentials: `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL`.
 
 ### Billing
 
@@ -121,11 +121,11 @@ Stripe powers subscriptions. `src/lib/stripe.ts` initializes the client. The wor
 | `src/lib/workspace.ts` | `requireActiveWorkspace()` — auth + workspace guard |
 | `src/lib/slideshow-data.ts` | Firestore read helpers for slideshows/displays |
 | `src/lib/r2.ts` | Cloudflare R2 client + presigned URL helpers |
-| `src/lib/stripe.ts` | Stripe client init |
+| `ee/billing/stripe.ts` | Stripe client init |
 | `src/lib/plan.ts` | Plan feature gates |
 | `src/lib/firebase-admin.ts` | Firebase Admin SDK (server-side) |
 | `src/lib/firebase-client.ts` | Firebase client SDK (browser-side) |
-| `src/middleware.ts` | Session cookie validation + route protection |
+| `src/proxy.ts` | Host routing, session shortcut, and route protection |
 | `src/app/screen/page.tsx` | Display pairing + playback runtime |
 
 ---
@@ -142,11 +142,14 @@ Stripe powers subscriptions. `src/lib/stripe.ts` initializes the client. The wor
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | Firebase web config |
 | `FIREBASE_SERVICE_ACCOUNT` | Yes | Service account JSON (single line) |
 | `FIREBASE_SESSION_SECRET` | Yes | Cookie signing secret (48-byte base64) |
+| `NEXT_PUBLIC_APP_URL` | Yes | Public marketing/canonical base URL (`https://aularo.com`) |
+| `NEXT_PUBLIC_SCREEN_URL` | Yes | Screen pairing/playback base URL (`https://screen.aularo.com`) |
+| `NEXT_PUBLIC_DASHBOARD_URL` | Yes | Laptop dashboard/control base URL (`https://screen.aularo.com` by default) |
 | `R2_ACCOUNT_ID` | Media | Cloudflare R2 |
 | `R2_ACCESS_KEY_ID` | Media | Cloudflare R2 |
 | `R2_SECRET_ACCESS_KEY` | Media | Cloudflare R2 |
-| `R2_BUCKET_NAME` | Media | Cloudflare R2 |
-| `R2_PUBLIC_URL` | Media | Public CDN base URL |
+| `R2_BUCKET` | Media | Cloudflare R2 |
+| `R2_PUBLIC_BASE_URL` | Media | Public CDN base URL |
 | `STRIPE_SECRET_KEY` | Billing | Stripe secret key |
 | `STRIPE_WEBHOOK_SECRET` | Billing | Webhook signature verification |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Billing | Stripe publishable key |

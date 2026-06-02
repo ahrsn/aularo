@@ -7,6 +7,7 @@ import { resolveTheme } from "@/components/slides/theme";
 import type { Slide, SlideKind } from "@/lib/schema";
 import { useMountTransition } from "@/components/ui/motion";
 import { Icon } from "@/components/ui/icon";
+import { SITE_NAME } from "@/lib/site";
 
 type Template = {
   kind: SlideKind;
@@ -172,7 +173,7 @@ const TEMPLATES: Template[] = [
     kind: "event-card",
     label: "Event card",
     family: "data",
-    description: "Auto-fills from a Clarra event.",
+    description: `Auto-fills from a ${SITE_NAME} event.`,
     fixture: {
       id: "t-event",
       kind: "event-card",

@@ -5,6 +5,7 @@ import { TRIAL_DURATION_MS } from "@/lib/schema";
 import { isCommunity } from "@/lib/edition";
 import { LogoAvatar } from "./logo-avatar";
 import { BrandColorsInline } from "./brand-colors-inline";
+import { SCREEN_DISPLAY_URL } from "@/lib/site";
 
 export function IdentityHeader({
   workspace,
@@ -60,7 +61,7 @@ export function IdentityHeader({
           className="mt-0.5 font-mono text-muted"
           style={{ fontSize: 12.5, letterSpacing: "-0.005em" }}
         >
-          {slug ? `clarra.show/${slug}` : "No public URL yet"}
+          {slug ? `${SCREEN_DISPLAY_URL}/${slug}` : "No public URL yet"}
         </div>
         <div className="mt-3">
           <BrandColorsInline

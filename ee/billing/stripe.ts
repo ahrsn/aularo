@@ -51,6 +51,8 @@ export function planFromPriceId(
 
 export function appBaseUrl(): string {
   return (
+    process.env.NEXT_PUBLIC_DASHBOARD_URL ??
+    process.env.NEXT_PUBLIC_SCREEN_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.VERCEL_URL?.replace(/^/, "https://") ??
     "http://localhost:3000"

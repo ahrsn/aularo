@@ -1,4 +1,4 @@
-# `ee/` — Clarra Cloud Edition (commercial)
+# `ee/` — Aularo Cloud Edition (commercial)
 
 Everything in this directory is **proprietary** and licensed under
 [`ee/LICENSE`](./LICENSE), **not** the AGPLv3 that covers the rest of the repo.

@@ -12,6 +12,7 @@ import {
 } from "@/lib/actions";
 import { useToast } from "@/components/ui/toast";
 import type { Integration, IntegrationProvider } from "@/lib/schema";
+import { SITE_NAME } from "@/lib/site";
 
 type CatalogEntry = {
   provider: IntegrationProvider;
@@ -26,7 +27,7 @@ const FEATURED: CatalogEntry[] = [
     provider: "drive",
     name: "Google Drive",
     logo: "https://ssl.gstatic.com/images/branding/product/2x/drive_2020q4_48dp.png",
-    desc: "Sync photos from a Drive folder — changes mirror to Clarra.",
+    desc: `Sync photos from a Drive folder — changes mirror to ${SITE_NAME}.`,
     category: "storage",
   },
   {
@@ -43,7 +44,7 @@ const CATALOG: CatalogEntry[] = [
     provider: "zapier",
     name: "Zapier",
     logo: "https://cdn.simpleicons.org/zapier/FF4A00",
-    desc: "Connect Clarra to 7,000+ apps — no-code automation",
+    desc: `Connect ${SITE_NAME} to 7,000+ apps — no-code automation`,
     category: "automation",
   },
   {

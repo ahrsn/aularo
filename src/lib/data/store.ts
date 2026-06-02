@@ -1,5 +1,5 @@
 /**
- * DataStore port — the database-agnostic seam for Clarra.
+ * DataStore port — the database-agnostic seam for Aularo.
  *
  * STATUS: design scaffold (Phase 3 of docs/open-core.md). These are the
  * contracts a storage backend must satisfy. They are intentionally type-only —

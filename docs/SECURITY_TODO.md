@@ -1,4 +1,4 @@
-# Clarra — Security TODO
+# Aularo — Security TODO
 
 Security-focused backlog. Pulled out from the general roadmap
 ([docs/TODO.md](./TODO.md)) so nothing security-relevant gets lost under

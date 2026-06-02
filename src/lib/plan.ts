@@ -8,7 +8,7 @@ import { isCommunity } from "./edition";
  *
  * Edition boundary: in the self-hosted community edition every capability is
  * granted and every limit is lifted. The operator runs on their own database
- * and object storage, so the caps below — which exist to meter Clarra's hosted
+ * and object storage, so the caps below — which exist to meter Aularo's hosted
  * cloud — do not apply. All 21 gate call sites stay identical across editions;
  * the only thing that changes is what these functions return, right here.
  */

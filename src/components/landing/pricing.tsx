@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Eyebrow } from "@/components/ui/label";
+import { SITE_NAME } from "@/lib/site";
 
 type Tier = {
   name: string;
@@ -32,7 +33,7 @@ const tiers: Tier[] = [
     features: [
       "1 display",
       "3 slideshows",
-      "Clarra watermark on-screen",
+      `${SITE_NAME} watermark on-screen`,
       "Email support",
     ],
     cta: "Start Free",
@@ -50,7 +51,7 @@ const tiers: Tier[] = [
       "Unlimited slideshows",
       "Public preview links",
       "Google Drive + Dropbox sync",
-      "No Clarra branding",
+      `No ${SITE_NAME} branding`,
       "Email support",
     ],
     cta: "Start 14-Day Trial",
@@ -102,6 +103,13 @@ export function Pricing() {
             >
               Priced per display, not per seat.
             </h2>
+            <Link
+              href="#open-source"
+              className="mt-3 inline-flex items-center gap-[6px] text-[13px] font-medium tracking-[-0.005em] text-moss transition-colors duration-quiet hover:text-ink"
+            >
+              Or self-host the open-source edition, free
+              <Icon name="arrow-up-right" size={13} />
+            </Link>
           </div>
           <div
             className="inline-flex items-center rounded-[10px] border border-line bg-surface"

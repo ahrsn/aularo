@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Wordmark } from "@/components/ui/wordmark";
+import { SITE_NAME } from "@/lib/site";
 
 export type FormPanelProps = {
   title: string;
@@ -21,7 +22,7 @@ export function FormPanel({ title, subtitle, children, footer }: FormPanelProps)
         </div>
         <Link
           href="/"
-          aria-label="Clarra home"
+          aria-label={`${SITE_NAME} home`}
           className="mt-[2px] shrink-0 text-ink opacity-85 transition-opacity hover:opacity-100"
         >
           <Wordmark size={36} showWord={false} />

@@ -44,8 +44,8 @@ export default function LiveDisplayPage({
   const [workspace, setWorkspace] = useState<WorkspaceDoc | null>(null);
 
   useEffect(() => {
-    setWorkspaceId(localStorage.getItem("clarra-workspace-id"));
-    setScreenId(localStorage.getItem("clarra-screen-id"));
+    setWorkspaceId(localStorage.getItem("aularo-workspace-id"));
+    setScreenId(localStorage.getItem("aularo-screen-id"));
   }, []);
 
   // Subscribe to the workspace doc for plan info.

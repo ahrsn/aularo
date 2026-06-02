@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { GoogleLogo } from "@/components/ui/google-logo";
 import { Icon } from "@/components/ui/icon";
 import { FormPanel } from "../_components/form-panel";
+import { SITE_NAME } from "@/lib/site";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -74,7 +75,7 @@ export default function LoginPage() {
       subtitle="Welcome back."
       footer={
         <>
-          New to Clarra?{" "}
+          New to {SITE_NAME}?{" "}
           <Link href="/signup" className="text-ink underline">
             Create an account
           </Link>
@@ -148,7 +149,7 @@ export default function LoginPage() {
           {busy ? (
             <>
               <span
-                className="clarra-spin inline-block rounded-full border-2 border-[rgba(245,241,232,0.3)] border-t-paper"
+                className="aularo-spin inline-block rounded-full border-2 border-[rgba(245,241,232,0.3)] border-t-paper"
                 style={{ width: 15, height: 15 }}
                 aria-hidden
               />

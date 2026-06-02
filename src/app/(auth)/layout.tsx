@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Wordmark } from "@/components/ui/wordmark";
+import { SITE_NAME } from "@/lib/site";
 
 /* On-dark tokens tuned for the forest aside */
 const ONDARK = {
@@ -15,18 +16,18 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[45fr_55fr]">
       {/* Left — brand canvas (persists across auth page navigations) */}
       <aside
-        className="clarra-auth-aside relative flex flex-col overflow-hidden"
+        className="aularo-auth-aside relative flex flex-col overflow-hidden"
         style={{ color: ONDARK.text, minHeight: 240 }}
       >
-        <div aria-hidden className="clarra-auth-bg" />
-        <div aria-hidden className="clarra-auth-wash" />
+        <div aria-hidden className="aularo-auth-bg" />
+        <div aria-hidden className="aularo-auth-wash" />
 
         {/* Wordmark */}
         <div className="relative flex items-center px-6 pt-6 md:px-10 md:pt-10">
           <Link
             href="/"
             className="animate-fade-up inline-block"
-            aria-label="Clarra home"
+            aria-label={`${SITE_NAME} home`}
             style={{ color: ONDARK.text }}
           >
             <Wordmark size={26} />

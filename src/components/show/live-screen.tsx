@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/ui/wordmark";
 import { SlideRenderer } from "@/components/slides/SlideRenderer";
 import { onDarkForKind, resolveTheme } from "@/components/slides/theme";
 import type { Slide, SlideThemeOverride } from "@/lib/schema";
+import { SITE_NAME } from "@/lib/site";
 
 type Settings = {
   duration?: number;
@@ -162,7 +163,7 @@ export function LiveScreen({
               fontFamily: "var(--font-geist), sans-serif",
             }}
           >
-            Made with Clarra
+            Made with {SITE_NAME}
           </div>
         )}
 

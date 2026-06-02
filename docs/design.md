@@ -1,4 +1,4 @@
-# Clarra — Product Design
+# Aularo — Product Design
 
 **Version:** 1.0.0-beta.1
 **Last updated:** 2026-04-18
@@ -7,7 +7,7 @@
 
 ## Purpose
 
-Clarra is a digital signage platform built for event professionals, venues, and spaces that want to control what's on their screens without touching a cable.
+Aularo, formerly Clarra, is a digital signage platform built for event professionals, venues, and spaces that want to control what's on their screens without touching a cable.
 
 The product lives at the intersection of three older categories — slideshow builders, digital signage systems, and event management — and simplifies all three into one workspace.
 
@@ -53,11 +53,11 @@ The central content unit. A slideshow is an ordered collection of slides with gl
 
 ### Display
 
-A physical screen (TV, monitor, kiosk) running the Clarra `/screen` URL in a browser. Displays are registered in the workspace and paired by entering a short code. Once paired, a display receives slideshow assignments in real time via Firestore. Displays report heartbeats; uptime is tracked in a rolling 7-day histogram.
+A physical screen (TV, monitor, kiosk) running the Aularo screen URL in a browser. Displays are registered in the workspace and paired by entering a short code. Once paired, a display receives slideshow assignments in real time via Firestore. Displays report heartbeats; uptime is tracked in a rolling 7-day histogram.
 
 ### Pairing Flow
 
-1. Open `clarra.app/screen` on the physical TV — shows a short code.
+1. Open `screen.aularo.com` on the physical TV — shows a short code.
 2. In the dashboard, go to Displays → Pair → enter the code.
 3. The screen's `PairingCode` document is claimed; the display document is created and linked.
 4. The TV transitions from pairing state to playing the assigned slideshow.

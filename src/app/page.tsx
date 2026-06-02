@@ -7,13 +7,15 @@ import { UseCases } from "@/components/landing/use-cases";
 import { Features } from "@/components/landing/features";
 import { Quotes } from "@/components/landing/quotes";
 import { Comparison } from "@/components/landing/comparison";
+import { OpenSource } from "@/components/landing/open-source";
 import { Pricing } from "@/components/landing/pricing";
 import { FAQ } from "@/components/landing/faq";
 import { CTAFooter } from "@/components/landing/cta-footer";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-paper text-ink">
+    <div className="relative min-h-screen overflow-x-clip bg-paper text-ink">
+      <div className="grain-overlay" aria-hidden />
       <LandingHeader />
       <Hero />
       <LogoStrip />
@@ -23,6 +25,7 @@ export default function LandingPage() {
       <Quotes />
       <Comparison />
       <HowItWorks />
+      <OpenSource />
       <Pricing />
       <FAQ />
       <CTAFooter />

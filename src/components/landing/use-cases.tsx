@@ -1,5 +1,6 @@
 import { Eyebrow } from "@/components/ui/label";
 import { Icon } from "@/components/ui/icon";
+import { SITE_NAME } from "@/lib/site";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -23,7 +24,7 @@ const cases: Case[] = [
     body: "When a loan arrives, when a piece moves, when hours shift for a private event, one change updates every screen.",
     scene: {
       label: "ATRIUM · NORTH",
-      caption: "\u201CWorks on Paper, 1962\u20131974\u201D opens Friday at 6.",
+      caption: "“Works on Paper, 1962–1974” opens Friday at 6.",
       image:
         "https://images.unsplash.com/photo-1544967082-d9d25d867d66?auto=format&fit=crop&w=1400&q=70",
     },
@@ -51,7 +52,7 @@ const cases: Case[] = [
     bullets: [
       "Per-room scheduling and overrides",
       "Quiet hours for overnight lobbies",
-      "Brand-safe templates, no Clarra mark",
+      `Brand-safe templates, no ${SITE_NAME} mark`,
     ],
     stat: "8 displays",
     sub: "per property, average",
@@ -62,7 +63,7 @@ const cases: Case[] = [
   {
     tag: "Events & Conferences",
     title: "A program that keeps itself",
-    body: "Reception at six. Gala loop at eight. Thank-you card at midnight. Clarra remembers so you don't.",
+    body: `Reception at six. Gala loop at eight. Thank-you card at midnight. ${SITE_NAME} remembers so you don't.`,
     scene: {
       label: "FOYER · EAST",
       caption: "Dr. Kemi Adebayo, Keynote at 9:30 am, Grand Hall.",
@@ -93,50 +94,59 @@ function SceneFrame({
 }) {
   return (
     <div
-      className="relative overflow-hidden rounded-[2px] border border-line"
+      className="relative overflow-hidden"
       style={{ aspectRatio: "16/10", background: "#19231A" }}
     >
       <img
         src={image}
         alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-        style={{ filter: "saturate(0.82) contrast(1.02)" }}
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-[600ms] ease-[var(--ease-settle)] group-hover:scale-[1.025]"
+        style={{ filter: "saturate(0.78) contrast(1.04)" }}
       />
+      {/* Cinematic grade */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(14,20,16,0.1) 0%, rgba(14,20,16,0.2) 45%, rgba(14,20,16,0.68) 100%)",
+            "linear-gradient(180deg, rgba(14,20,16,0.08) 0%, rgba(14,20,16,0.18) 40%, rgba(14,20,16,0.72) 100%)",
         }}
       />
+      {/* Inner border recess — gives a screen-bezel feeling */}
       <div
-        className="pointer-events-none absolute rounded-[1px] border"
-        style={{ inset: 12, borderColor: "rgba(245,241,232,0.2)" }}
+        className="pointer-events-none absolute rounded-none"
+        style={{
+          inset: 10,
+          border: "1px solid rgba(245,241,232,0.14)",
+          boxShadow: "inset 0 0 0 1px rgba(14,20,16,0.4)",
+        }}
       />
+      {/* Location badge */}
       <div
         className="absolute font-mono text-paper"
         style={{
-          left: 16,
-          top: 16,
-          fontSize: 10,
-          opacity: 0.7,
-          letterSpacing: "0.1em",
+          left: 14,
+          top: 14,
+          fontSize: 9.5,
+          opacity: 0.65,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
         }}
       >
         {label}
       </div>
+      {/* Caption */}
       <div
         className="absolute font-serif text-paper"
         style={{
-          left: 16,
-          right: 16,
-          bottom: 16,
-          fontSize: 15,
-          lineHeight: 1.3,
-          letterSpacing: "-0.015em",
+          left: 14,
+          right: 14,
+          bottom: 14,
+          fontSize: 14.5,
+          lineHeight: 1.32,
+          letterSpacing: "-0.016em",
           fontVariationSettings: "'opsz' 18",
           maxWidth: "88%",
-          textShadow: "0 1px 12px rgba(0,0,0,0.35)",
+          textShadow: "0 1px 16px rgba(0,0,0,0.45)",
         }}
       >
         {caption}
@@ -149,18 +159,28 @@ export function UseCases() {
   return (
     <section
       id="use-cases"
-      className="border-b border-t border-line bg-surface px-5 py-14 md:px-8 md:py-20"
+      className="relative border-b border-t border-line bg-surface px-5 py-20 md:px-8 md:py-28"
     >
+      {/* Subtle ambient depth behind the section */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: "var(--line-strong)", opacity: 0.5 }}
+      />
+
       <div className="mx-auto" style={{ maxWidth: 1120 }}>
-        <div className="mb-10 max-w-[780px] md:mb-12">
-          <Eyebrow className="mb-[10px]">Use Cases</Eyebrow>
+        {/* Section header — generous breathing room */}
+        <div className="mb-14 max-w-[720px] md:mb-16">
+          <Eyebrow className="mb-3 text-moss">Use cases</Eyebrow>
           <h2
-            className="font-serif text-[32px] leading-[1.1] md:text-[44px] md:leading-[1.08]"
+            className="font-serif"
             style={{
-              letterSpacing: "-0.028em",
-              fontWeight: 400,
+              fontSize: "clamp(30px, 4.8vw, 52px)",
+              lineHeight: 1.08,
+              letterSpacing: "-0.032em",
+              fontWeight: 500,
               color: "#0E1410",
-              margin: 0,
+              margin: "0 0 18px",
               fontVariationSettings: "'opsz' 72",
               textWrap: "balance",
             }}
@@ -170,47 +190,88 @@ export function UseCases() {
               not the reason for it.
             </em>
           </h2>
+          <p
+            className="font-sans text-muted"
+            style={{
+              fontSize: 15,
+              lineHeight: 1.55,
+              letterSpacing: "-0.005em",
+              maxWidth: 540,
+              textWrap: "pretty",
+            }}
+          >
+            Three venues, three different rhythms — one system that stays out of the way.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {/* Card grid — asymmetric first card spans full width on md */}
+        <div className="grid grid-cols-1 gap-4 md:gap-5 lg:grid-cols-3">
           {cases.map((c, i) => {
             const num = String(i + 1).padStart(2, "0");
+            const isFeature = i === 0;
+
             return (
               <article
                 key={c.tag}
-                className="flex flex-col overflow-hidden rounded-[4px] border border-line"
-                style={{ background: "#FBF8F0" }}
+                className={[
+                  "group relative flex flex-col overflow-hidden rounded-[3px] border border-line shadow-tinted-sm",
+                  "transition-[border-color,box-shadow,transform] duration-[200ms] ease-[var(--ease-quiet)]",
+                  "hover:-translate-y-[2px] hover:border-line-strong hover:shadow-tinted-md",
+                  "animate-fade-up",
+                  isFeature ? "lg:col-span-1" : "",
+                ].join(" ")}
+                style={{
+                  background: "#FBF8F0",
+                  animationDelay: `${i * 80}ms`,
+                }}
               >
                 <SceneFrame {...c.scene} />
 
-                <div className="flex flex-1 flex-col gap-4 p-6 md:p-7">
-                  <div
-                    className="flex items-center gap-[10px]"
-                    style={{ fontFamily: "var(--font-geist), sans-serif" }}
-                  >
+                {/* Bottom edge hairline reflection */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px"
+                  style={{ background: "rgba(251,248,240,0.8)" }}
+                />
+
+                <div className="flex flex-1 flex-col gap-5 p-6 md:p-7">
+                  {/* Tag row */}
+                  <div className="flex items-center gap-[10px]">
                     <span
                       className="font-mono text-muted-2"
-                      style={{ fontSize: 11, letterSpacing: "0.12em" }}
+                      style={{ fontSize: 10.5, letterSpacing: "0.14em" }}
                     >
                       {num}
                     </span>
                     <span
                       aria-hidden
                       style={{
-                        width: 14,
+                        width: 16,
                         height: 1,
-                        background: "var(--line)",
+                        background: "var(--line-strong)",
+                        flexShrink: 0,
                       }}
                     />
-                    <span className="text-[11px] font-medium uppercase tracking-[0.1em] text-moss">
+                    <span
+                      className="font-mono text-moss"
+                      style={{
+                        fontSize: 10.5,
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        fontWeight: 500,
+                      }}
+                    >
                       {c.tag}
                     </span>
                   </div>
 
+                  {/* Heading */}
                   <h3
-                    className="font-serif text-[22px] leading-[1.2]"
+                    className="font-serif"
                     style={{
-                      letterSpacing: "-0.02em",
+                      fontSize: 21,
+                      lineHeight: 1.22,
+                      letterSpacing: "-0.022em",
                       fontWeight: 500,
                       color: "#0E1410",
                       margin: 0,
@@ -221,11 +282,12 @@ export function UseCases() {
                     {c.title}
                   </h3>
 
+                  {/* Body */}
                   <p
                     className="text-muted"
                     style={{
-                      fontSize: 14,
-                      lineHeight: 1.55,
+                      fontSize: 13.5,
+                      lineHeight: 1.58,
                       letterSpacing: "-0.005em",
                       margin: 0,
                       textWrap: "pretty",
@@ -234,16 +296,21 @@ export function UseCases() {
                     {c.body}
                   </p>
 
-                  <ul className="m-0 flex list-none flex-col gap-[8px] p-0">
+                  {/* Bullets */}
+                  <ul className="m-0 flex list-none flex-col gap-[7px] p-0">
                     {c.bullets.map((b) => (
                       <li
                         key={b}
-                        className="flex items-start gap-[10px] text-[13px] tracking-[-0.005em] text-ink"
-                        style={{ textWrap: "pretty", lineHeight: 1.45 }}
+                        className="flex items-start gap-[10px] text-[13px] text-ink"
+                        style={{
+                          letterSpacing: "-0.005em",
+                          lineHeight: 1.45,
+                          textWrap: "pretty",
+                        }}
                       >
                         <Icon
                           name="check"
-                          size={14}
+                          size={13}
                           style={{
                             color: "#3B5A41",
                             marginTop: 3,
@@ -255,40 +322,47 @@ export function UseCases() {
                     ))}
                   </ul>
 
+                  {/* Stat */}
                   <div
-                    className="mt-auto flex items-baseline gap-[8px] border-t border-line pt-4"
+                    className="rule-letterpress mt-auto flex items-baseline gap-[8px] pt-5"
                   >
                     <div
                       className="font-serif"
                       style={{
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: 500,
                         color: "#3B5A41",
-                        letterSpacing: "-0.022em",
+                        letterSpacing: "-0.024em",
                         fontVariationSettings: "'opsz' 48",
                         lineHeight: 1,
                       }}
                     >
                       {c.stat}
                     </div>
-                    <div className="text-[12px] tracking-[-0.005em] text-muted">
+                    <div
+                      className="text-muted"
+                      style={{ fontSize: 12, letterSpacing: "-0.005em" }}
+                    >
                       {c.sub}
                     </div>
                   </div>
 
+                  {/* Quote */}
                   <figure
-                    className="m-0 flex items-start gap-[10px] rounded-[2px] border-l"
+                    className="m-0 flex items-start gap-0"
                     style={{
-                      borderColor: "#3B5A41",
-                      padding: "4px 0 4px 12px",
+                      borderLeft: "2px solid #3B5A41",
+                      paddingLeft: 14,
+                      paddingTop: 2,
+                      paddingBottom: 2,
                     }}
                   >
                     <div className="flex-1">
                       <blockquote
                         className="m-0 font-serif italic"
                         style={{
-                          fontSize: 13.5,
-                          lineHeight: 1.45,
+                          fontSize: 13,
+                          lineHeight: 1.5,
                           letterSpacing: "-0.008em",
                           color: "#0E1410",
                           textWrap: "pretty",
@@ -298,12 +372,13 @@ export function UseCases() {
                         &ldquo;{c.quote}&rdquo;
                       </blockquote>
                       <figcaption
-                        className="mt-[6px] text-[11.5px] tracking-[-0.005em] text-muted"
+                        className="mt-[7px]"
+                        style={{ fontSize: 11.5, letterSpacing: "-0.005em" }}
                       >
                         <span className="text-ink" style={{ fontWeight: 500 }}>
                           {c.by}
                         </span>
-                        <span> · {c.byRole}</span>
+                        <span className="text-muted"> &middot; {c.byRole}</span>
                       </figcaption>
                     </div>
                   </figure>

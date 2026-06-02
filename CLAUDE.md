@@ -1,10 +1,10 @@
 @AGENTS.md
 
-# Clarra — AI Agent Instructions
+# Aularo — AI Agent Instructions
 
 ## What this project is
 
-Clarra is a digital signage platform (Next.js 16, React 19, Firebase, Cloudflare R2, Stripe). See [docs/architecture.md](./docs/architecture.md) for the full system map and [docs/design.md](./docs/design.md) for product context.
+Aularo, formerly Clarra, is a digital signage platform (Next.js 16, React 19, Firebase, Cloudflare R2, Stripe). See [docs/architecture.md](./docs/architecture.md) for the full system map and [docs/design.md](./docs/design.md) for product context.
 
 ## Commands
 
@@ -66,5 +66,5 @@ Current version: **1.0.0-beta.1** — set in `package.json`. Update both `packag
 | `src/lib/slideshow-data.ts` | Firestore read helpers |
 | `src/lib/plan.ts` | Plan feature gates |
 | `src/app/screen/page.tsx` | Display pairing + playback runtime |
-| `src/middleware.ts` | Route protection |
+| `src/proxy.ts` | Host routing and route protection |
 | `CHANGELOG.md` | Release history (will power in-app modal) |

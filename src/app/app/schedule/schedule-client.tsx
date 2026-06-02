@@ -45,7 +45,7 @@ function exportCsv(
       note: b.note ?? "",
     }));
   downloadCsv(
-    `clarra-schedule-${dayKey}.csv`,
+    `aularo-schedule-${dayKey}.csv`,
     toCsv(rows, [
       "day",
       "start",

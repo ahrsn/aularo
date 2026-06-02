@@ -1,13 +1,13 @@
 # Changelog
 
-All notable changes to Clarra are documented here.
+All notable changes to Aularo, formerly Clarra, are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
 ## [1.0.0-beta.2] — 2026-04-18
 
-Clarra, refined.
+Aularo, refined.
 
 A stability and polish pass before wider rollout. Nothing flashy — just the platform running smoother and handling edge cases better.
 
@@ -30,7 +30,7 @@ The billing flow is more reliable end to end. Plan upgrades and webhook events a
 
 ## [1.0.0-beta.1] — 2026-04-18
 
-Clarra is live.
+Aularo is live.
 
 This is the first public beta. The whole platform, shipped in one pass. Build your slideshows, pair a screen, and you're running in a few minutes.
 

@@ -19,6 +19,8 @@ jobs:
       # Build-time placeholders. Real secrets are injected by the host
       # (Vercel) at deploy time; these only satisfy module/config evaluation.
       NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_SCREEN_URL: http://localhost:3000
+      NEXT_PUBLIC_DASHBOARD_URL: http://localhost:3000
       NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci.example.com
       NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder

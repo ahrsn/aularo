@@ -1,10 +1,11 @@
 import { Icon } from "@/components/ui/icon";
 import { Eyebrow } from "@/components/ui/label";
+import { SITE_NAME } from "@/lib/site";
 
 type Cell = "yes" | "no" | "partial" | string;
 
 const cols = [
-  { key: "clarra", name: "Clarra", sub: "what you want" },
+  { key: "aularo", name: SITE_NAME, sub: "what you want" },
   { key: "usb", name: "USB + YouTube", sub: "what most venues use" },
   { key: "screencloud", name: "ScreenCloud", sub: "built for retail" },
   { key: "yodeck", name: "Yodeck", sub: "Raspberry Pi boxes" },
@@ -18,30 +19,30 @@ const rows: Array<{
   {
     label: "Runs on Any Browser",
     note: "No dongles, no boxes, no installs",
-    cells: { clarra: "yes", usb: "no", screencloud: "no", yodeck: "no" },
+    cells: { aularo: "yes", usb: "no", screencloud: "no", yodeck: "no" },
   },
   {
     label: "One Edit Updates Every Screen",
     note: "Under 15 seconds",
-    cells: { clarra: "yes", usb: "no", screencloud: "partial", yodeck: "partial" },
+    cells: { aularo: "yes", usb: "no", screencloud: "partial", yodeck: "partial" },
   },
   {
     label: "Schedule Across Multiple Events",
     note: "Not just day-parts",
-    cells: { clarra: "yes", usb: "no", screencloud: "no", yodeck: "no" },
+    cells: { aularo: "yes", usb: "no", screencloud: "no", yodeck: "no" },
   },
   {
     label: "Keeps Playing if the Internet Drops",
-    cells: { clarra: "yes", usb: "yes", screencloud: "partial", yodeck: "yes" },
+    cells: { aularo: "yes", usb: "yes", screencloud: "partial", yodeck: "yes" },
   },
   {
     label: "SOC 2, SSO, Audit Log",
     note: "Included, not an upsell",
-    cells: { clarra: "yes", usb: "no", screencloud: "partial", yodeck: "no" },
+    cells: { aularo: "yes", usb: "no", screencloud: "partial", yodeck: "no" },
   },
   {
     label: "Priced per Display, Not per Seat",
-    cells: { clarra: "yes", usb: "yes", screencloud: "no", yodeck: "yes" },
+    cells: { aularo: "yes", usb: "yes", screencloud: "no", yodeck: "yes" },
   },
 ];
 
@@ -100,7 +101,7 @@ export function Comparison() {
             >
               Most signage tools were built for drive-throughs.{" "}
               <em style={{ fontStyle: "italic", color: "#3B5A41" }}>
-                Clarra was built for the room.
+                {SITE_NAME} was built for the room.
               </em>
             </h2>
           </div>
@@ -131,7 +132,7 @@ export function Comparison() {
           >
             <div />
             {cols.map((c) => {
-              const primary = c.key === "clarra";
+              const primary = c.key === "aularo";
               return (
                 <div key={c.key} className="text-center">
                   <div

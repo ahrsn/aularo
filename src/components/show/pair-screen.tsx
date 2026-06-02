@@ -1,4 +1,5 @@
 import { Wordmark } from "@/components/ui/wordmark";
+import { DASHBOARD_DISPLAY_URL } from "@/lib/site";
 
 /**
  * Full-bleed pair screen shown on the kiosk display until claimed.
@@ -76,7 +77,7 @@ export function PairScreen({
               borderRadius: 4,
             }}
           >
-            clarra.show/app
+            {DASHBOARD_DISPLAY_URL}/app
           </span>{" "}
           on your laptop
         </div>

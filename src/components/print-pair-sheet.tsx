@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import QRCode from "qrcode";
 import { Wordmark } from "@/components/ui/wordmark";
+import { SCREEN_DISPLAY_URL, SCREEN_URL, SITE_NAME } from "@/lib/site";
 
 type PrintPairSheetProps = {
   displayName: string;
@@ -22,11 +23,11 @@ export function PrintPairSheet({
   const [qrSvg, setQrSvg] = useState<string>("");
   const [today, setToday] = useState<string>("");
 
-  // Print sheets are for real venues — always show the canonical production
-  // host, regardless of where the modal was opened (localhost, preview, prod).
+  // Print sheets are for real venues, so always use the canonical screen host
+  // regardless of where the modal was opened (localhost, preview, prod).
   const printableUrl = pairUrl.replace(
     /^https?:\/\/[^/]+/,
-    "https://clarra.show",
+    SCREEN_URL,
   );
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export function PrintPairSheet({
   if (!mounted) return null;
 
   const urlForDisplay = printableUrl.replace(/^https?:\/\//, "");
-  const footerLabel = workspaceLabel || "Clarra";
+  const footerLabel = workspaceLabel || SITE_NAME;
 
   return createPortal(
     <div className="print-portal">
@@ -137,7 +138,7 @@ export function PrintPairSheet({
             <span className="pps-footer-dot">·</span>
             <span>{today}</span>
             <span className="pps-footer-dot">·</span>
-            <span>clarra.show</span>
+            <span>{SCREEN_DISPLAY_URL}</span>
           </footer>
         </div>
       </div>

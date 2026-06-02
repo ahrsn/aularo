@@ -4,7 +4,7 @@
 # against the target project.
 #
 # Usage:
-#   GCP_PROJECT=clarra-prod ./scripts/enable-firestore-ttl.sh
+#   GCP_PROJECT=aularo-prod ./scripts/enable-firestore-ttl.sh
 #
 # Collections managed here:
 #   - rateLimits     ttlAt  (swept ~24h after window expiry)

@@ -2,39 +2,37 @@ import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { newsreader, geist, jetbrains } from "@/lib/fonts";
 import { ToastProvider } from "@/components/ui/toast";
+import { APP_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 import "./globals.css";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://clarra.show";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(appUrl),
+  metadataBase: new URL(APP_URL),
   title: {
-    default: "Clarra — slideshow software for events, galleries, and kiosks",
-    template: "%s · Clarra",
+    default: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "Run beautiful slideshows across every screen at your event. Pair a display in seconds. Schedule the night. Sync from Drive or Dropbox.",
-  applicationName: "Clarra",
-  authors: [{ name: "Clarra" }],
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  authors: [{ name: SITE_NAME }],
   keywords: [
     "digital signage",
     "slideshow software",
     "event displays",
     "kiosk software",
     "gallery labels",
-    "clarra",
+    "aularo",
   ],
   openGraph: {
     type: "website",
-    url: appUrl,
-    siteName: "Clarra",
-    title: "Clarra — slideshow software for events, galleries, and kiosks",
+    url: APP_URL,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description:
       "The quiet screen on the wall, managed from one calm place. Pair any browser. Schedule run-of-show. Sync from Drive.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Clarra — slideshow software for events, galleries, and kiosks",
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description:
       "The quiet screen on the wall, managed from one calm place.",
   },

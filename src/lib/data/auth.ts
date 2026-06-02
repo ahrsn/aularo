@@ -3,7 +3,7 @@
  *
  * STATUS: design scaffold (Phase 3/5 of docs/open-core.md). Type-only.
  *
- * Clarra already issues its own signed session cookie after verifying an
+ * Aularo already issues its own signed session cookie after verifying an
  * identity token (see src/lib/auth-session.ts), so that cookie layer stays put.
  * Only the identity provider varies by edition:
  *   - Firebase Auth (cloud): verifyIdToken + createSessionCookie.

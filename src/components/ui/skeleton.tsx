@@ -7,7 +7,7 @@ export function Skeleton({
   return (
     <div
       aria-hidden="true"
-      className={cn("clarra-skeleton rounded-[4px]", className)}
+      className={cn("aularo-skeleton rounded-[4px]", className)}
       {...props}
     />
   );

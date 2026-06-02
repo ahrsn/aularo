@@ -25,7 +25,7 @@ function client() {
 }
 
 export function r2Bucket(): string {
-  return process.env.R2_BUCKET ?? "clarra-media";
+  return process.env.R2_BUCKET ?? "aularo-media";
 }
 
 export function r2PublicUrl(key: string): string | null {

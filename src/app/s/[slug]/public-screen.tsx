@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { LiveScreen } from "@/components/show/live-screen";
 import { Wordmark } from "@/components/ui/wordmark";
+import { SITE_NAME } from "@/lib/site";
 
 type Slide = { id: string; kind: string; data: Record<string, unknown> };
 
@@ -41,7 +42,7 @@ export function PublicScreen({
         }}
       >
         <Wordmark size={12} color="#F5F1E8" showWord={false} />
-        Preview · Powered by Clarra
+        Preview · Powered by {SITE_NAME}
       </Link>
     </div>
   );

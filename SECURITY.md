@@ -18,10 +18,10 @@ Security fixes target the latest release on `main`. The current version is in
 
 ## Security-sensitive areas
 
-Clarra is multi-tenant software. Treat the following as security-sensitive —
+Aularo, formerly Clarra, is multi-tenant software. Treat the following as security-sensitive —
 changes here warrant a focused test or an explicit verification note:
 
-- Authentication and session cookies (`src/lib/auth-session.ts`, `src/middleware.ts`)
+- Authentication and session cookies (`src/lib/auth-session.ts`, `src/proxy.ts`)
 - Workspace isolation and access control (`src/lib/workspace.ts`, `firestore.rules`)
 - Display pairing and the heartbeat HMAC (`src/lib/display-auth.ts`, `/screen`)
 - Media upload presigning and storage access (`src/lib/r2.ts`)

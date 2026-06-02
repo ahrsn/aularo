@@ -1,14 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { OfflineIndicator } from "@/components/show/offline-indicator";
 import { ServiceWorkerRegister } from "@/components/show/sw-register";
 
 export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
-  themeColor: "#0E1410",
   other: {
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0E1410",
 };
 
 export default function ScreenLayout({

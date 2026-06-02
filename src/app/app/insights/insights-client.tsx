@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/label";
 import { Icon } from "@/components/ui/icon";
 import { downloadCsv, toCsv } from "@/lib/csv";
+import { SITE_NAME } from "@/lib/site";
 import type { Display, Slideshow } from "@/lib/schema";
 
 /**
@@ -564,7 +565,7 @@ function exportInsightsCsv(
 ) {
   const today = new Date().toISOString().slice(0, 10);
   const csv =
-    "# Clarra insights — " +
+    `# ${SITE_NAME} insights — ` +
     today +
     "\n\n## Displays\n" +
     toCsv(
@@ -588,6 +589,6 @@ function exportInsightsCsv(
       })),
       ["name", "status", "slides", "updated_at"],
     );
-  downloadCsv(`clarra-insights-${today}.csv`, csv);
+  downloadCsv(`aularo-insights-${today}.csv`, csv);
   void displays; // kept for future breakdowns
 }

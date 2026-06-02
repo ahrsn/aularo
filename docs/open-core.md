@@ -1,4 +1,4 @@
-# Clarra — Open-Core Architecture Blueprint
+# Aularo — Open-Core Architecture Blueprint
 
 **Status:** In progress — Phases 0–2 implemented, Phase 3 ports designed (2026-06-01)
 **Created:** 2026-06-01
@@ -29,13 +29,13 @@
 - CE auth provider: **deferred to Phase 5** (Lucia vs Auth.js decided then)
 - CE realtime: **support both** Supabase Realtime *and* Postgres `LISTEN/NOTIFY`+SSE behind a `RealtimePort`
 - Go-public: **after Phase 4** — public preview CE still requires a free Firebase project; Google-free CE lands at Phase 5
-- Brand: **same name (Clarra)** for CE and Cloud
+- Brand: **same name (Aularo)** for CE and Cloud; formerly Clarra in public repo copy
 
 ---
 
 ## 1. The model
 
-Clarra ships in two editions from **one repository**:
+Aularo ships in two editions from **one repository**:
 
 - **Community Edition (CE)** — open source under **AGPLv3**. The full signage engine, all features unlocked, self-hosted, **no Google/Firebase requirement**. Bring your own Postgres (or Supabase) + any S3-compatible bucket.
 - **Cloud Edition (Cloud)** — CE *plus* the proprietary `ee/` layer: Stripe billing, plan tiers, managed multi-tenant hosting, marketing site, SLA/support. This is what runs on `main` today.
@@ -214,4 +214,4 @@ Every one of the 21 `firebase-admin` sites changes from importing `firebase-admi
 - **CE auth provider** → **Deferred to Phase 5.** Lock the data layer first; choose Lucia vs Auth.js when the auth port is built. The signed-cookie layer (`auth-session.ts`) stays regardless.
 - **CE realtime** → **Support both.** `RealtimePort` ships with two implementations: Supabase Realtime (managed self-host) and Postgres `LISTEN/NOTIFY` → SSE (zero-extra-service self-host). Self-hoster picks via env. Both remain push-based per the no-polling rule.
 - **Go-public timing** → **After Phase 4.** Repo goes public with a Firebase-backed CE preview to build momentum; the fully Google-free CE (Postgres path) follows at Phase 5. Sequence the README/docs so the Firebase requirement is clearly labeled "preview" and the Postgres path is "coming."
-- **Brand** → **Same name, Clarra.** Unified brand across CE and Cloud. Mitigate paid/free confusion with clear "Community Edition" vs "Cloud" labeling in README, docs, and in-app footer — not a separate name.
+- **Brand** → **Same name, Aularo.** Unified brand across CE and Cloud. README/GitHub copy can mention "formerly Clarra" during the rebrand, but CE and Cloud are not separate names.

@@ -27,20 +27,20 @@ export function UIProvider({ children }: { children: ReactNode }) {
 
   // Load saved values on mount.
   useEffect(() => {
-    const d = (localStorage.getItem("clarra-density") as Density | null) ?? null;
-    const a = localStorage.getItem("clarra-accent");
+    const d = (localStorage.getItem("aularo-density") as Density | null) ?? null;
+    const a = localStorage.getItem("aularo-accent");
     if (d) setDensityState(d);
     if (a !== null) setAccentState(a !== "0");
   }, []);
 
   const setDensity = useCallback((d: Density) => {
     setDensityState(d);
-    localStorage.setItem("clarra-density", d);
+    localStorage.setItem("aularo-density", d);
   }, []);
 
   const setAccent = useCallback((a: boolean) => {
     setAccentState(a);
-    localStorage.setItem("clarra-accent", a ? "1" : "0");
+    localStorage.setItem("aularo-accent", a ? "1" : "0");
   }, []);
 
   const value = useMemo(

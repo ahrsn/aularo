@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Wordmark } from "@/components/ui/wordmark";
 import { useToast } from "@/components/ui/toast";
 import { completeOnboarding } from "@/lib/actions";
+import { isCommunity } from "@/lib/edition";
+import { SCREEN_DISPLAY_URL, SITE_NAME } from "@/lib/site";
 import type { UseCase, WorkspacePlan } from "@/lib/schema";
 
 type UseCaseOption = { value: UseCase; label: string; hint: string };
@@ -51,7 +53,7 @@ const PLANS: PlanOption[] = [
       "Up to 5 displays",
       "Photo slideshows + public preview links",
       "Email support, 1 business day",
-      "No Clarra branding on the screen",
+      `No ${SITE_NAME} branding on the screen`,
     ],
     cta: "Start 14-day trial",
     trial: true,
@@ -205,6 +207,7 @@ export function OnboardingWizard({
                 setPlan={setPlan}
                 onBack={prevStep}
                 onNext={nextStep}
+                isCommunityEdition={isCommunity}
               />
             )}
             {step === 5 && (
@@ -292,7 +295,7 @@ function StepUseCase({
 }) {
   return (
     <div>
-      <h1 className="text-h2">Where will Clarra live?</h1>
+      <h1 className="text-h2">Where will {SITE_NAME} live?</h1>
       <p className="mt-1 text-[13.5px] tracking-[-0.005em] text-muted">
         Pick what fits best. You can change this anytime.
       </p>
@@ -490,7 +493,7 @@ function StepActivation({
               Pair a screen
             </div>
             <div className="mt-0.5 text-[12.5px] text-muted">
-              Point any display at clarra.show and enter the code.
+              Point any display at {SCREEN_DISPLAY_URL} and enter the code.
             </div>
           </div>
         </button>
@@ -520,12 +523,99 @@ function StepPlan({
   setPlan,
   onBack,
   onNext,
+  isCommunityEdition,
 }: {
   plan: WorkspacePlan | null;
   setPlan: (v: WorkspacePlan) => void;
   onBack: () => void;
   onNext: () => void;
+  isCommunityEdition: boolean;
 }) {
+  // In community edition, auto-select "free" and show a confirmation instead
+  // of a paid plan picker. This runs once on render — effect-free by design
+  // since isCommunityEdition is a build-time constant.
+  if (isCommunityEdition && plan !== "free") {
+    setPlan("free");
+  }
+
+  if (isCommunityEdition) {
+    return (
+      <div>
+        <h1 className="text-h2">Everything included.</h1>
+        <p className="mt-1 text-[13.5px] tracking-[-0.005em] text-muted">
+          The {SITE_NAME} Community Edition unlocks every feature — unlimited
+          displays, slideshows, schedules, and automations — with no billing
+          and no plan limits.
+        </p>
+
+        <div
+          className="mt-6 rounded-[4px] border p-5"
+          style={{
+            background: "#FBF8F0",
+            borderColor: "#19231A",
+            boxShadow: "0 0 0 1px #19231A inset",
+          }}
+        >
+          <div
+            className="font-serif"
+            style={{ fontSize: 18, fontWeight: 500, letterSpacing: "-0.02em" }}
+          >
+            Community Edition
+          </div>
+          <div
+            className="mt-1 text-[12.5px] tracking-[-0.005em] text-muted"
+            style={{ textWrap: "pretty" }}
+          >
+            Self-hosted. You own your data and infrastructure.
+          </div>
+          <ul className="mt-3 flex list-none flex-col gap-y-1.5 p-0">
+            {[
+              "Unlimited displays",
+              "Unlimited slideshows",
+              "Scheduling + automations",
+              "All transitions and media types",
+              "No branding. No billing. No limits.",
+            ].map((f) => (
+              <li
+                key={f}
+                className="flex items-center gap-[6px] text-[12px] tracking-[-0.005em] text-ink"
+              >
+                <Icon
+                  name="check"
+                  size={12}
+                  style={{ color: "#3B5A41", flexShrink: 0 }}
+                />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-6 flex gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            onClick={onBack}
+            icon="arrow-left"
+          >
+            Back
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
+            onClick={onNext}
+            iconRight="arrow-right"
+            className="flex-1 justify-center"
+          >
+            Continue
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="text-h2">Pick your plan.</h1>

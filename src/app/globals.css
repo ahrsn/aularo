@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Clarra design tokens — ported from design bundle styles/tokens.css */
+/* Aularo design tokens — ported from design bundle styles/tokens.css */
 :root {
   /* Color: base */
   --primary: #19231a; /* deep forest, logo, primary surfaces */
@@ -95,6 +95,8 @@ html,
 body {
   background: var(--paper);
   color: var(--ink);
+  overflow-x: hidden;
+  max-width: 100%;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -155,6 +157,78 @@ a:focus-visible,
   color: var(--muted);
 }
 
+/* ─── Elevated marketing scale (redesign) ───────────────────────────────────
+   Larger, more commanding display step for hero headlines, a mono eyebrow,
+   tinted shadows (forest hue, never pure black), and a paper-grain overlay.
+   On-brand extensions of the existing editorial system. */
+.text-display-xl {
+  font-family: var(--font-serif);
+  font-size: clamp(36px, 7.6vw, 94px);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+  font-variation-settings: "opsz" 72;
+  text-wrap: balance;
+}
+.text-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Tinted shadows — carry the forest hue so elevation feels warm, not generic */
+.shadow-tinted-sm {
+  box-shadow: 0 1px 2px rgba(25, 35, 26, 0.05), 0 2px 6px rgba(25, 35, 26, 0.05);
+}
+.shadow-tinted-md {
+  box-shadow: 0 4px 12px -2px rgba(25, 35, 26, 0.1),
+    0 14px 30px -10px rgba(25, 35, 26, 0.12);
+}
+.shadow-tinted-lg {
+  box-shadow: 0 24px 50px -18px rgba(25, 35, 26, 0.2),
+    0 8px 22px -10px rgba(25, 35, 26, 0.1);
+}
+
+/* Hairline that reads as letterpress, not a flat 1px border */
+.rule-letterpress {
+  border-top: 1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(251, 248, 240, 0.7);
+}
+
+/* Paper grain — fixed, non-interactive fractal-noise overlay that breaks the
+   flatness of the warm canvas. Very low opacity so it reads as texture. */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .grain-overlay {
+    opacity: 0.03;
+  }
+}
+
+/* Staggered scroll reveal — child delays for a cascaded entrance */
+.reveal-1 {
+  transition-delay: 60ms;
+}
+.reveal-2 {
+  transition-delay: 120ms;
+}
+.reveal-3 {
+  transition-delay: 180ms;
+}
+.reveal-4 {
+  transition-delay: 240ms;
+}
+
 /* Motion utilities */
 /* Scroll reveal — JS adds .in-view to trigger */
 .reveal {
@@ -167,7 +241,7 @@ a:focus-visible,
   transform: translateY(0);
 }
 
-@keyframes clarra-fade-up {
+@keyframes aularo-fade-up {
   from {
     opacity: 0;
     transform: translateY(14px);
@@ -178,76 +252,76 @@ a:focus-visible,
   }
 }
 .animate-fade-up {
-  animation: clarra-fade-up 600ms var(--ease-settle) backwards;
+  animation: aularo-fade-up 600ms var(--ease-settle) backwards;
 }
 
 /* Data-state driven animations — modals, menus, popovers, toasts, form errors */
-@keyframes clarra-overlay-in {
+@keyframes aularo-overlay-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-@keyframes clarra-overlay-out {
+@keyframes aularo-overlay-out {
   from { opacity: 1; }
   to { opacity: 0; }
 }
-@keyframes clarra-panel-in {
+@keyframes aularo-panel-in {
   from { opacity: 0; transform: scale(0.98); }
   to   { opacity: 1; transform: scale(1); }
 }
-@keyframes clarra-panel-out {
+@keyframes aularo-panel-out {
   from { opacity: 1; transform: scale(1); }
   to   { opacity: 0; transform: scale(0.98); }
 }
-@keyframes clarra-menu-in {
+@keyframes aularo-menu-in {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes clarra-menu-out {
+@keyframes aularo-menu-out {
   from { opacity: 1; transform: translateY(0); }
   to   { opacity: 0; transform: translateY(-4px); }
 }
-@keyframes clarra-toast-in {
+@keyframes aularo-toast-in {
   from { opacity: 0; transform: translateY(-10px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes clarra-toast-out {
+@keyframes aularo-toast-out {
   from { opacity: 1; transform: translateY(0) scale(1); }
   to   { opacity: 0; transform: translateY(-6px) scale(0.98); }
 }
-@keyframes clarra-toast-progress {
+@keyframes aularo-toast-progress {
   from { transform: scaleX(1); }
   to   { transform: scaleX(0); }
 }
-@keyframes clarra-live-pulse {
+@keyframes aularo-live-pulse {
   0%   { transform: scale(1); opacity: 0.45; }
   70%  { transform: scale(2.2); opacity: 0; }
   100% { transform: scale(2.2); opacity: 0; }
 }
-@keyframes clarra-error-in {
+@keyframes aularo-error-in {
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes clarra-step-in-forward {
+@keyframes aularo-step-in-forward {
   from { opacity: 0; transform: translateX(12px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-@keyframes clarra-step-in-back {
+@keyframes aularo-step-in-back {
   from { opacity: 0; transform: translateX(-12px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 
 /* Data-state helpers — apply via data-state="open|closed" on backdrop/panel */
-[data-motion="overlay"][data-state="open"]  { animation: clarra-overlay-in  var(--duration-quiet)  var(--ease-quiet)  both; }
-[data-motion="overlay"][data-state="closed"]{ animation: clarra-overlay-out var(--duration-quiet)  var(--ease-quiet)  both; }
-[data-motion="panel"][data-state="open"]    { animation: clarra-panel-in   var(--duration-settle) var(--ease-settle) both; }
-[data-motion="panel"][data-state="closed"]  { animation: clarra-panel-out  var(--duration-quiet)  var(--ease-quiet)  both; }
-[data-motion="menu"][data-state="open"]     { animation: clarra-menu-in    var(--duration-settle) var(--ease-settle) both; }
-[data-motion="menu"][data-state="closed"]   { animation: clarra-menu-out   var(--duration-quiet)  var(--ease-quiet)  both; }
-[data-motion="toast"][data-state="open"]    { animation: clarra-toast-in   var(--duration-settle) var(--ease-settle) both; }
-[data-motion="toast"][data-state="closed"]  { animation: clarra-toast-out  var(--duration-quiet)  var(--ease-quiet)  both; }
-[data-motion="error"]                        { animation: clarra-error-in   var(--duration-settle) var(--ease-settle) both; }
-[data-motion="step"][data-direction="forward"] { animation: clarra-step-in-forward var(--duration-settle) var(--ease-settle) both; }
-[data-motion="step"][data-direction="back"]    { animation: clarra-step-in-back    var(--duration-settle) var(--ease-settle) both; }
+[data-motion="overlay"][data-state="open"]  { animation: aularo-overlay-in  var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="overlay"][data-state="closed"]{ animation: aularo-overlay-out var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="panel"][data-state="open"]    { animation: aularo-panel-in   var(--duration-settle) var(--ease-settle) both; }
+[data-motion="panel"][data-state="closed"]  { animation: aularo-panel-out  var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="menu"][data-state="open"]     { animation: aularo-menu-in    var(--duration-settle) var(--ease-settle) both; }
+[data-motion="menu"][data-state="closed"]   { animation: aularo-menu-out   var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="toast"][data-state="open"]    { animation: aularo-toast-in   var(--duration-settle) var(--ease-settle) both; }
+[data-motion="toast"][data-state="closed"]  { animation: aularo-toast-out  var(--duration-quiet)  var(--ease-quiet)  both; }
+[data-motion="error"]                        { animation: aularo-error-in   var(--duration-settle) var(--ease-settle) both; }
+[data-motion="step"][data-direction="forward"] { animation: aularo-step-in-forward var(--duration-settle) var(--ease-settle) both; }
+[data-motion="step"][data-direction="back"]    { animation: aularo-step-in-back    var(--duration-settle) var(--ease-settle) both; }
 
 /* View Transitions — native crossfade between /app routes (Turn, 600ms) */
 @supports (view-transition-name: app-main) {
@@ -257,10 +331,10 @@ a:focus-visible,
     animation-timing-function: var(--ease-turn);
   }
   ::view-transition-old(app-main) {
-    animation-name: clarra-overlay-out;
+    animation-name: aularo-overlay-out;
   }
   ::view-transition-new(app-main) {
-    animation-name: clarra-overlay-in;
+    animation-name: aularo-overlay-in;
   }
 }
 
@@ -282,11 +356,11 @@ a:focus-visible,
 }
 
 /* Auth aside — static blurred background so input re-renders don't repaint it */
-.clarra-auth-aside {
+.aularo-auth-aside {
   background-color: #19231a;
   isolation: isolate;
 }
-.clarra-auth-bg {
+.aularo-auth-bg {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -298,7 +372,7 @@ a:focus-visible,
   will-change: auto;
   z-index: 0;
 }
-.clarra-auth-wash {
+.aularo-auth-wash {
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -309,22 +383,22 @@ a:focus-visible,
     linear-gradient(180deg, rgba(14, 20, 16, 0.28) 0%, rgba(14, 20, 16, 0.38) 100%);
   z-index: 1;
 }
-.clarra-auth-aside > *:not(.clarra-auth-bg):not(.clarra-auth-wash) {
+.aularo-auth-aside > *:not(.aularo-auth-bg):not(.aularo-auth-wash) {
   position: relative;
   z-index: 2;
 }
 
-@keyframes clarra-spin {
+@keyframes aularo-spin {
   to {
     transform: rotate(360deg);
   }
 }
-.clarra-spin {
-  animation: clarra-spin 0.75s linear infinite;
+.aularo-spin {
+  animation: aularo-spin 0.75s linear infinite;
 }
 
 /* Logo loader — scale wave: three glyph shapes bounce in sequence */
-@keyframes clarra-logo-wave {
+@keyframes aularo-logo-wave {
   0%, 60%, 100% {
     transform: scale(1);
     opacity: 1;
@@ -334,21 +408,21 @@ a:focus-visible,
     opacity: 0.35;
   }
 }
-.clarra-logo-loader .logo-shape {
+.aularo-logo-loader .logo-shape {
   transform-box: fill-box;
   transform-origin: center;
-  animation: clarra-logo-wave 1.4s ease-in-out infinite;
+  animation: aularo-logo-wave 1.4s ease-in-out infinite;
 }
-.clarra-logo-loader .logo-shape:nth-child(1) { animation-delay: 0s; }
-.clarra-logo-loader .logo-shape:nth-child(2) { animation-delay: 0.14s; }
-.clarra-logo-loader .logo-shape:nth-child(3) { animation-delay: 0.28s; }
+.aularo-logo-loader .logo-shape:nth-child(1) { animation-delay: 0s; }
+.aularo-logo-loader .logo-shape:nth-child(2) { animation-delay: 0.14s; }
+.aularo-logo-loader .logo-shape:nth-child(3) { animation-delay: 0.28s; }
 @media (prefers-reduced-motion: reduce) {
-  .clarra-logo-loader .logo-shape {
+  .aularo-logo-loader .logo-shape {
     animation: none;
   }
 }
 
-@keyframes clarra-shimmer {
+@keyframes aularo-shimmer {
   0% {
     background-position: 0% 50%;
   }
@@ -356,7 +430,7 @@ a:focus-visible,
     background-position: 200% 50%;
   }
 }
-.clarra-shimmer {
+.aularo-shimmer {
   background: linear-gradient(
     135deg,
     var(--surface-sunk) 0%,
@@ -364,12 +438,12 @@ a:focus-visible,
     var(--surface-sunk) 100%
   );
   background-size: 200% 200%;
-  animation: clarra-shimmer 1.6s linear infinite;
+  animation: aularo-shimmer 1.6s linear infinite;
 }
 
 /* Skeleton — shadcn-style shimmer sweep.
    A muted base with a soft highlight band that translates left→right. */
-@keyframes clarra-skeleton-sweep {
+@keyframes aularo-skeleton-sweep {
   0% {
     background-position: -150% 0;
   }
@@ -377,7 +451,7 @@ a:focus-visible,
     background-position: 250% 0;
   }
 }
-.clarra-skeleton {
+.aularo-skeleton {
   position: relative;
   overflow: hidden;
   background-color: var(--surface-sunk);
@@ -389,10 +463,10 @@ a:focus-visible,
   );
   background-size: 50% 100%;
   background-repeat: no-repeat;
-  animation: clarra-skeleton-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: aularo-skeleton-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .clarra-skeleton {
+  .aularo-skeleton {
     animation: none;
     background-image: none;
   }

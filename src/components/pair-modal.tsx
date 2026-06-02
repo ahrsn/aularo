@@ -8,6 +8,7 @@ import { useMountTransition } from "@/components/ui/motion";
 import { claimPairingCode } from "@/lib/actions";
 import { errorCode, humanizeError } from "@/lib/errors";
 import { useToast } from "@/components/ui/toast";
+import { SCREEN_DISPLAY_URL } from "@/lib/site";
 
 type Phase = "code" | "linking" | "success" | "error" | "limit";
 
@@ -104,7 +105,7 @@ export function PairModal({
             <p className="font-serif text-[15px] leading-[1.5] text-[#3A433B]">
               On the screen you want to pair, open{" "}
               <span className="rounded bg-[rgba(25,35,26,0.07)] px-[7px] py-[2px] font-mono text-[13px]">
-                clarra.show/screen
+                {SCREEN_DISPLAY_URL}
               </span>{" "}
               and type the code it displays here.
             </p>

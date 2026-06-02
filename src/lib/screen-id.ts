@@ -1,7 +1,7 @@
-const SCREEN_ID_KEY = "clarra-screen-id";
-const WORKSPACE_ID_KEY = "clarra-workspace-id";
-const DISPLAY_ID_KEY = "clarra-display-id";
-const AUTH_SECRET_KEY = "clarra-display-auth-secret";
+const SCREEN_ID_KEY = "aularo-screen-id";
+const WORKSPACE_ID_KEY = "aularo-workspace-id";
+const DISPLAY_ID_KEY = "aularo-display-id";
+const AUTH_SECRET_KEY = "aularo-display-auth-secret";
 
 export function getScreenId(): string {
   const stored = localStorage.getItem(SCREEN_ID_KEY);

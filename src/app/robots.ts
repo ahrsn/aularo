@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { APP_URL } from "@/lib/site";
 
 function baseUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "https://clarra.show";
+  return APP_URL;
 }
 
 export default function robots(): MetadataRoute.Robots {
